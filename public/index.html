@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecture publique en Gironde</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="evitement" href="#contenu">Aller au contenu</a>
+  <div class="cadre">
+    <nav class="sommaire" aria-label="Pages">
+      <div class="marque">
+        <span class="marque-titre">Lecture publique</span>
+        <span class="marque-sous">Tableau de bord du réseau girondin</span>
+      </div>
+      <button class="bouton-menu" type="button" aria-expanded="false" aria-controls="liste-pages">Pages</button>
+      <ol id="liste-pages" class="liste-pages"></ol>
+      <p class="pied-sommaire">Données : enquête du Service du livre et de la lecture, ministère de la Culture.<br><a href="#a-savoir">Méthode et limites</a></p>
+    </nav>
+
+    <div class="principal">
+      <form class="filtres" aria-label="Filtres">
+        <label>Année
+          <select name="annee"></select>
+        </label>
+        <label>Intercommunalité
+          <select name="epci"><option value="">Toute la Gironde</option></select>
+        </label>
+        <label>Commune
+          <select name="commune"><option value="">Toutes</option></select>
+        </label>
+        <label>Typologie
+          <select name="typologie">
+            <option value="">Toutes</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+          </select>
+        </label>
+        <label class="filtre-reseau">Réseau biblio.gironde
+          <select name="reseau">
+            <option value="">Tous</option><option value="1">Oui</option><option value="0">Non</option>
+          </select>
+        </label>
+        <button type="button" class="reinitialiser">Réinitialiser</button>
+      </form>
+
+      <main id="contenu" tabindex="-1">
+        <div class="avertissement" hidden></div>
+        <header class="entete-page">
+          <h1></h1>
+          <p class="perimetre"></p>
+        </header>
+        <section class="chiffres" aria-label="Chiffres clés"></section>
+        <section class="bloc bloc-carte" hidden>
+          <h2>Carte des lieux de lecture</h2>
+          <div id="carte" role="region" aria-label="Carte des bibliothèques"></div>
+          <p class="legende-carte"></p>
+        </section>
+        <section class="bloc bloc-repartition" hidden>
+          <h2></h2>
+          <div class="repartition"></div>
+        </section>
+        <section class="bloc bloc-territoires">
+          <h2></h2>
+          <div class="territoires"></div>
+        </section>
+        <section class="bloc bloc-tableau">
+          <div class="tableau-entete">
+            <h2>Détail par établissement</h2>
+            <input type="search" placeholder="Chercher une bibliothèque ou une commune" aria-label="Chercher dans le tableau">
+            <button type="button" class="exporter">Télécharger en CSV</button>
+          </div>
+          <div class="tableau-defilement"><table></table></div>
+        </section>
+        <section class="bloc a-savoir" id="a-savoir">
+          <h2>Méthode et limites</h2>
+          <ul></ul>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

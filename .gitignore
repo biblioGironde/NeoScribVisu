@@ -1,0 +1,6 @@
+node_modules/
+# Exports bruts de l'enquête : ils contiennent des données nominatives, ne pas les publier.
+data/raw/
+# Données générées : à publier seulement si la diffusion a été validée.
+public/data/*.json
+rapport-import.md

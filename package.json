@@ -1,0 +1,16 @@
+{
+  "name": "tb-lecture-publique",
+  "version": "1.0.0",
+  "description": "Tableau de bord open source de la lecture publique en Gironde (enquête annuelle SLL)",
+  "scripts": {
+    "import": "node scripts/import.mjs",
+    "start": "node scripts/serveur.mjs",
+    "verifier": "node scripts/verifier.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "csv-parse": "^5.6.0"
+  },
+  "type": "module",
+  "private": true
+}

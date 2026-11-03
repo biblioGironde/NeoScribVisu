@@ -1,0 +1,128 @@
+:root {
+  --papier: #fafaf7;
+  --surface: #ffffff;
+  --encre: #1e2a33;
+  --gris: #5f6b74;
+  --filet: #dcdcd4;
+  --estuaire: #2f6f73;
+  --estuaire-clair: #d5e6e4;
+  --vin: #8c2f4b;
+  --sable: #e7dcc2;
+  --typo-a: #1d4e52; --typo-b: #2f6f73; --typo-c: #5c9c98; --typo-d: #a9c9c3; --typo-e: #d9c9a3;
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "Public Sans", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papier: #151c21; --surface: #1b242a; --encre: #e7ebee; --gris: #9aa6ae; --filet: #2f3a41;
+    --estuaire: #6fb3b0; --estuaire-clair: #24403f; --vin: #e08aa3; --sable: #3d3727;
+    --typo-a: #8fd0cb; --typo-b: #6fb3b0; --typo-c: #4f8f8c; --typo-d: #36605e; --typo-e: #7a6c4c;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--papier); color: var(--encre); font: 15px/1.5 var(--sans); font-variant-numeric: tabular-nums; }
+a { color: var(--estuaire); }
+:focus-visible { outline: 2px solid var(--vin); outline-offset: 2px; }
+.evitement { position: absolute; left: -999px; }
+.evitement:focus { left: 1rem; top: 1rem; z-index: 10; background: var(--surface); padding: .5rem 1rem; }
+
+.cadre { display: grid; grid-template-columns: 15.5rem 1fr; min-height: 100vh; }
+
+/* ---- Sommaire */
+.sommaire { border-right: 1px solid var(--filet); padding: 1.5rem 0 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+.marque { padding: 0 1.25rem 1.25rem; }
+.marque-titre { display: block; font: 600 1.35rem/1.15 var(--serif); }
+.marque-sous { display: block; color: var(--gris); font-size: .82rem; margin-top: .2rem; }
+.bouton-menu { display: none; }
+.liste-pages { list-style: none; margin: 0; padding: 0; flex: 1; }
+.liste-pages a { display: block; padding: .42rem 1.25rem; color: var(--encre); text-decoration: none; border-left: 3px solid transparent; font-size: .93rem; }
+.liste-pages a:hover { background: var(--estuaire-clair); }
+.liste-pages a[aria-current="page"] { border-left-color: var(--vin); font-weight: 600; background: var(--surface); }
+.pied-sommaire { padding: 1rem 1.25rem 0; margin: 0; font-size: .78rem; color: var(--gris); }
+
+/* ---- Filtres */
+.principal { min-width: 0; }
+.filtres { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; padding: .8rem clamp(1rem, 3vw, 2.5rem); background: color-mix(in srgb, var(--papier) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--filet); }
+.filtres label { display: flex; flex-direction: column; font-size: .78rem; color: var(--gris); gap: .2rem; }
+.filtres select { font: inherit; font-size: .9rem; color: var(--encre); background: var(--surface); border: 1px solid var(--filet); border-radius: 4px; padding: .35rem .5rem; max-width: 17rem; }
+button { font: inherit; font-size: .88rem; color: var(--estuaire); background: none; border: 1px solid var(--estuaire); border-radius: 4px; padding: .35rem .75rem; cursor: pointer; }
+button:hover { background: var(--estuaire-clair); }
+
+main { padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem; max-width: 84rem; outline: none; }
+.avertissement { border-left: 3px solid var(--vin); background: var(--surface); padding: .6rem 1rem; margin-bottom: 1.5rem; font-size: .9rem; max-width: 60rem; }
+.entete-page h1 { font: 600 clamp(1.9rem, 3.2vw, 2.6rem)/1.1 var(--serif); margin: 0; letter-spacing: -.01em; }
+.perimetre { color: var(--gris); margin: .4rem 0 0; }
+
+/* ---- Chiffres clés : présentation d'annuaire statistique, pas de cartes */
+.chiffres { display: grid; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); margin: 2rem 0 1rem; border-top: 2px solid var(--encre); }
+.chiffre { padding: .9rem 1.2rem 1rem 0; border-bottom: 1px solid var(--filet); }
+.chiffre-valeur { font: 400 2.15rem/1.05 var(--serif); letter-spacing: -.015em; }
+.chiffre-unite { font: 400 1rem var(--sans); color: var(--gris); margin-left: .2rem; }
+.chiffre-libelle { font-size: .88rem; margin-top: .3rem; max-width: 22ch; }
+.chiffre-detail { font-size: .8rem; color: var(--gris); margin-top: .25rem; }
+.evolution-hausse { color: var(--estuaire); }
+.evolution-baisse { color: var(--vin); }
+.chiffre.indisponible .chiffre-valeur { font-size: 1.05rem; font-family: var(--sans); color: var(--gris); padding-top: .55rem; }
+.note { cursor: help; color: var(--gris); border-bottom: 1px dotted; }
+
+.bloc { margin-top: 2.75rem; }
+.bloc h2 { font: 600 1.3rem/1.2 var(--serif); margin: 0 0 1rem; }
+
+/* ---- Barres par territoire */
+.territoires { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 2rem 3rem; }
+.serie h3 { font: 600 .95rem var(--sans); margin: 0 0 .6rem; }
+.barre { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: .6rem; align-items: center; font-size: .82rem; padding: .12rem 0; }
+.barre-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barre-piste { position: relative; height: 1.15rem; }
+.barre-remplie { height: 100%; background: var(--estuaire); border-radius: 0 2px 2px 0; min-width: 1px; }
+.barre-valeur { position: absolute; top: 0; line-height: 1.15rem; padding-left: .35rem; color: var(--encre); white-space: nowrap; }
+.barre.selection .barre-remplie { background: var(--vin); }
+
+.repartition .barre-remplie { background: var(--typo-b); }
+
+/* ---- Carte */
+#carte { height: 26rem; border: 1px solid var(--filet); border-radius: 4px; background: var(--surface); }
+.legende-carte { font-size: .82rem; color: var(--gris); display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+.pastille { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; margin-right: .3rem; vertical-align: -1px; }
+
+/* ---- Tableau */
+.tableau-entete { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: center; margin-bottom: .8rem; }
+.tableau-entete h2 { margin: 0 auto 0 0; }
+.tableau-entete input { font: inherit; font-size: .9rem; padding: .35rem .6rem; border: 1px solid var(--filet); border-radius: 4px; min-width: 16rem; background: var(--surface); color: var(--encre); }
+.tableau-defilement { overflow-x: auto; max-height: 34rem; overflow-y: auto; border-top: 2px solid var(--encre); }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+th, td { padding: .42rem .7rem .42rem 0; border-bottom: 1px solid var(--filet); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child, th.texte, td.texte { text-align: left; }
+th { position: sticky; top: 0; background: var(--papier); font-weight: 600; vertical-align: bottom; white-space: normal; min-width: 6rem; }
+th button { border: 0; padding: 0; color: inherit; font-weight: 600; text-align: inherit; font-size: inherit; }
+th button:hover { background: none; text-decoration: underline; }
+td.vide { color: var(--gris); }
+td:first-child { max-width: 20rem; overflow: hidden; text-overflow: ellipsis; }
+td:nth-child(2) { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; }
+th { min-width: 7.5rem; }
+th:first-child { min-width: 14rem; }
+tr.reseau td:first-child::after { content: " réseau"; font-size: .72rem; color: var(--vin); }
+
+.a-savoir ul { max-width: 46rem; padding-left: 1.1rem; color: var(--gris); font-size: .9rem; }
+.a-savoir li { margin-bottom: .45rem; }
+
+@media (max-width: 860px) {
+  .cadre { grid-template-columns: 1fr; }
+  .sommaire { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--filet); padding: 1rem 0 .5rem; }
+  .bouton-menu { display: block; margin: 0 1.25rem .5rem; }
+  .liste-pages[data-ferme="true"] { display: none; }
+  .pied-sommaire { display: none; }
+  .filtres { position: static; }
+  .territoires { grid-template-columns: 1fr; }
+  .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chiffre-valeur { font-size: 1.7rem; }
+  .barre { grid-template-columns: 7.5rem 1fr; }
+  .tableau-entete input { min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .barre-remplie { transition: width .35s ease; }
+}
