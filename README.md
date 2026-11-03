@@ -1,5 +1,7 @@
-# Lecture publique en Gironde : tableau de bord
+# NeoScribVisu
 
+
+Tableau de bord de la lecture publique en Gironde.
 Tableau de bord open source des bibliothèques de Gironde, construit à partir des exports de l'enquête annuelle du Service du livre et de la lecture (SLL, ministère de la Culture). Il remplace le rapport Looker Studio « TB Gironde » et en reprend les 17 pages, avec des calculs corrigés.
 
 - Aucun serveur ni base de données : un script Node prépare des fichiers JSON, une page web statique les affiche.
