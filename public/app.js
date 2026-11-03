@@ -339,6 +339,36 @@ function htmlTypologieCommune(page, lignes) {
   return lieux.map((e) => `<span class="typo-lieu">${typo(e.typologie)} <span class="typo-nom">${echapper(e.nom)}</span></span>`).join('');
 }
 
+/** Anneau (donut) des lieux par typologie, avec pourcentages dans les parts et légende chiffrée. */
+function anneauTypologies(items) {
+  const total = items.reduce((a, x) => a + x.v, 0);
+  const R = 100, r = 52, cx = 110, cy = 110; // rayons extérieur et intérieur
+  const pt = (rayon, angle) => [cx + rayon * Math.sin(angle), cy - rayon * Math.cos(angle)];
+  const pct1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+  let debut = 0;
+  const parts = items.map((x) => {
+    const angle = (x.v / total) * 2 * Math.PI;
+    const fin = debut + angle;
+    const grand = angle > Math.PI ? 1 : 0;
+    const [x1, y1] = pt(R, debut), [x2, y2] = pt(R, fin), [x3, y3] = pt(r, fin), [x4, y4] = pt(r, debut);
+    const d = items.length === 1
+      ? `M${cx},${cy - R}A${R},${R} 0 1 1 ${cx - .01},${cy - R}ZM${cx},${cy - r}A${r},${r} 0 1 0 ${cx + .01},${cy - r}Z`
+      : `M${x1},${y1}A${R},${R} 0 ${grand} 1 ${x2},${y2}L${x3},${y3}A${r},${r} 0 ${grand} 0 ${x4},${y4}Z`;
+    const part = x.v / total * 100;
+    const [lx, ly] = pt((R + r) / 2, debut + angle / 2);
+    debut = fin;
+    return `<path d="${d}" fill="var(--typo-${x.cle.toLowerCase()})" stroke="var(--papier)" stroke-width="2" fill-rule="evenodd">
+        <title>${x.nom} : ${nf().format(x.v)} lieux (${pct1.format(part)} %)</title></path>`
+      + (part >= 6 ? `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">${pct1.format(part)} %</text>` : '');
+  });
+  const legende = items.map((x) => `<li><span class="pastille" style="background:var(--typo-${x.cle.toLowerCase()})"></span>${x.nom}
+      <span class="anneau-nb">${nb(x.v, 'lieu', 'lieux')}, ${pct1.format(x.v / total * 100)} %</span></li>`).join('');
+  return `<div class="anneau"><svg viewBox="0 0 220 220" role="img" aria-label="Répartition de ${nb(total, 'lieu', 'lieux')} de lecture par typologie">${parts.join('')}
+      <text x="110" y="104" text-anchor="middle" class="anneau-total">${nf().format(total)}</text>
+      <text x="110" y="124" text-anchor="middle" class="anneau-unite">lieux</text></svg>
+    <ul class="anneau-legende">${legende}</ul></div>`;
+}
+
 function repartition(page, lignes) {
   if (!page.repartition) return null;
   // Sur une fiche commune, la typologie est indiquée en en-tête : pas de graphique.
@@ -355,6 +385,7 @@ function repartition(page, lignes) {
   }
   const typo = page.repartition === 'typologie';
   const items = comptes.map(([k, n]) => ({ cle: k, nom: typo ? `Typologie ${k}` : k, v: n }));
+  if (typo) return { titre, html: items.length ? anneauTypologies(items) : '<p class="chiffre-detail">Aucune donnée.</p>' };
   const max = Math.max(...items.map((x) => x.v), 1);
   return { titre, html: barres(items, max, (v) => nf().format(v), () => '', (x) => (typo ? `;background:var(--typo-${x.cle.toLowerCase()})` : '')) || '<p class="chiffre-detail">Aucune donnée.</p>' };
 }

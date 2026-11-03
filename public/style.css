@@ -92,6 +92,16 @@ main { padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem; max-width: 84rem; outline
 
 .repartition .barre-remplie { background: var(--typo-b); }
 
+/* ---- Anneau des typologies */
+.anneau { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 2.5rem; }
+.anneau svg { width: 15rem; height: 15rem; flex: none; }
+.anneau svg text { font: 600 11px var(--sans); fill: #1e2a33; }
+.anneau svg .anneau-total { font: 400 26px var(--serif); fill: var(--encre); }
+.anneau svg .anneau-unite { font: 400 11px var(--sans); fill: var(--gris); }
+.anneau-legende { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.anneau-legende li { font-size: .95rem; }
+.anneau-nb { color: var(--gris); margin-left: .5rem; font-size: .88rem; }
+
 /* ---- Carte */
 #carte { height: 26rem; border: 1px solid var(--filet); border-radius: 4px; background: var(--surface); }
 .etat-carte { font-size: .82rem; color: var(--vin); margin: .4rem 0 0; }
@@ -223,6 +233,9 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
   .barre { grid-template-columns: 55mm 1fr; font-size: 7.5pt; padding: 0; gap: 2mm; }
   .barre-piste, .barre-valeur { height: 3.4mm; line-height: 3.4mm; }
   .repartition { max-width: 170mm; }
+  .anneau svg { width: 58mm; height: 58mm; }
+  .anneau-legende li { font-size: 9pt; }
+  .anneau-nb { font-size: 8.5pt; }
 
   .imp-bloc-carte { break-inside: avoid; }
   .imp-carte { height: 92mm; border: 1px solid var(--filet); }
