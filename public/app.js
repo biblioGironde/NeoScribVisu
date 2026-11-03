@@ -226,6 +226,9 @@ function afficher() {
   document.title = `${page.titre} – NeoScribVisu`;
   $('.entete-page h1').textContent = page.titre;
   $('.perimetre').textContent = textePerimetre(lignes);
+  const typo = $('.typologie-commune');
+  typo.innerHTML = htmlTypologieCommune(page, lignes);
+  typo.hidden = !typo.innerHTML;
   afficherAvertissement();
   afficherChiffres(page, lignes);
   afficherCarte(page, lignes);
@@ -325,8 +328,21 @@ function territoires(page, lignes) {
   return { titre: parCommune ? 'Par commune' : 'Par intercommunalité', html: series.join(''), visible: series.length > 0 && groupes.size > 1 };
 }
 
+/** Fiche commune, page Général : typologie du ou des lieux, dans la couleur de la typologie. */
+function htmlTypologieCommune(page, lignes) {
+  if (page.id !== 'general' || !etat.commune) return '';
+  const lieux = lignes.filter((e) => e.type === 'lieu' && e.typologie)
+    .sort((a, b) => a.typologie.localeCompare(b.typologie) || a.nom.localeCompare(b.nom, 'fr'));
+  if (!lieux.length) return '';
+  const typo = (t) => `<span class="typo-texte" style="color:var(--typo-${t.toLowerCase()})">Typologie ${t}</span>`;
+  if (lieux.length === 1) return typo(lieux[0].typologie);
+  return lieux.map((e) => `<span class="typo-lieu">${typo(e.typologie)} <span class="typo-nom">${echapper(e.nom)}</span></span>`).join('');
+}
+
 function repartition(page, lignes) {
   if (!page.repartition) return null;
+  // Sur une fiche commune, la typologie est indiquée en en-tête : pas de graphique.
+  if (page.repartition === 'typologie' && etat.commune) return null;
   let titre, comptes;
   if (page.repartition === 'typologie') {
     titre = 'Lieux de lecture par typologie';
@@ -667,7 +683,8 @@ async function genererPdf(choix) {
 
   const cartes = [];
   pages.forEach((page, i) => {
-    const blocs = [`<header class="imp-entete"><h1>${echapper(page.titre)}</h1><p>${echapper(perimetre)}</p></header>`];
+    const typo = htmlTypologieCommune(page, lignes);
+    const blocs = [`<header class="imp-entete"><h1>${echapper(page.titre)}</h1><p>${echapper(perimetre)}</p></header>${typo ? `<p class="typologie-commune">${typo}</p>` : ''}`];
     if (avec('chiffres')) blocs.push(`<div class="chiffres">${htmlChiffres(page, lignes, false)}</div>`);
     if (avec('carte') && page.carte && window.L) {
       cartes.push(`imp-carte-${i}`);
