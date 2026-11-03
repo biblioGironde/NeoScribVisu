@@ -10,7 +10,7 @@
   --sable: #e7dcc2;
   --vert: #2e7d32;
   --rouge: #b3261e;
-  --typo-a: #1d4e52; --typo-b: #2f6f73; --typo-c: #5c9c98; --typo-d: #a9c9c3; --typo-e: #d9c9a3;
+  --typo-a: #50d070; --typo-b: #4cc7db; --typo-c: #fbbc32; --typo-d: #fb8827; --typo-e: #df4824;
   --serif: "Source Serif 4", Georgia, serif;
   --sans: "Public Sans", system-ui, sans-serif;
   color-scheme: light;
@@ -19,7 +19,7 @@
   :root {
     --papier: #151c21; --surface: #1b242a; --encre: #e7ebee; --gris: #9aa6ae; --filet: #2f3a41;
     --estuaire: #6fb3b0; --estuaire-clair: #24403f; --vin: #e08aa3; --sable: #3d3727; --vert: #7cc47f; --rouge: #f08a80;
-    --typo-a: #8fd0cb; --typo-b: #6fb3b0; --typo-c: #4f8f8c; --typo-d: #36605e; --typo-e: #7a6c4c;
+    --typo-a: #50d070; --typo-b: #4cc7db; --typo-c: #fbbc32; --typo-d: #fb8827; --typo-e: #df4824;
     color-scheme: dark;
   }
 }
@@ -92,6 +92,7 @@ main { padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem; max-width: 84rem; outline
 /* ---- Carte */
 #carte { height: 26rem; border: 1px solid var(--filet); border-radius: 4px; background: var(--surface); }
 .legende-carte { font-size: .82rem; color: var(--gris); display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+.td-typo .pastille { margin-right: .35rem; }
 .pastille { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; margin-right: .3rem; vertical-align: -1px; }
 
 /* ---- Tableau */
@@ -173,7 +174,7 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
   :root {
     --papier: #ffffff; --surface: #ffffff; --encre: #1e2a33; --gris: #5f6b74; --filet: #d4d4cc;
     --estuaire: #2f6f73; --estuaire-clair: #d5e6e4; --vin: #8c2f4b; --sable: #e7dcc2; --vert: #2e7d32; --rouge: #b3261e;
-    --typo-a: #1d4e52; --typo-b: #2f6f73; --typo-c: #5c9c98; --typo-d: #a9c9c3; --typo-e: #d9c9a3;
+    --typo-a: #50d070; --typo-b: #4cc7db; --typo-c: #fbbc32; --typo-d: #fb8827; --typo-e: #df4824;
     color-scheme: light;
   }
   html, body { background: #fff; }

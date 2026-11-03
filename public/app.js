@@ -368,7 +368,7 @@ function htmlTableau(cols, lignes, tri, interactif = true) {
   return `<thead><tr>${entete('nom', 'Établissement', true)}${entete('epci', 'Intercommunalité', true)}${entete('typologie', 'Typo.', true)}
     ${cols.map((c) => entete(c, meta.indicateurs[c].libelle + (unite(c) ? ` (${unite(c)})` : ''))).join('')}</tr></thead>
     <tbody>${lignes.map((e) => `<tr class="${e.type}"><td title="${echapper(e.nom)}">${echapper(e.commune)} – ${echapper(e.nom)}</td>
-      <td class="texte">${echapper(libelleEpci(e.epci))}</td><td class="texte">${e.typologie ?? ''}</td>
+      <td class="texte">${echapper(libelleEpci(e.epci))}</td><td class="texte td-typo">${e.typologie ? `<span class="pastille" style="background:var(--typo-${e.typologie.toLowerCase()})"></span>${e.typologie}` : ''}</td>
       ${cols.map((c) => {
         const v = valeurLigne(c, e, etat.annee);
         if (v === undefined) return '<td class="vide">non collecté</td>';
@@ -530,7 +530,8 @@ const COMPLEMENTS_EXPORT = [
   { id: 'garde', libelle: 'Page de garde (titre, périmètre, date)', defaut: true },
   { id: 'methode', libelle: 'Méthode et limites', defaut: true },
 ];
-const COULEURS_IMPRESSION = { a: '#1d4e52', b: '#2f6f73', c: '#5c9c98', d: '#a9c9c3', e: '#d9c9a3' };
+// Couleurs officielles des typologies (A : 80,208,112 · B : 76,199,219 · C : 251,188,50 · D : 251,136,39 · E : 223,72,36)
+const COULEURS_IMPRESSION = { a: '#50d070', b: '#4cc7db', c: '#fbbc32', d: '#fb8827', e: '#df4824' };
 const CLE_CHOIX = 'neoscribvisu-export';
 
 function choixMemorises() {
