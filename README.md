@@ -18,7 +18,13 @@ npm run verifier   # contrôle les totaux 2024 contre le Looker d'origine
 npm start          # http://localhost:8080
 ```
 
-Pour publier, il suffit de copier le dossier `public/` sur n'importe quel hébergement statique (serveur du Département, GitHub Pages…).
+## Publication
+
+Le site est publié sur GitHub Pages : https://bibliogironde.github.io/NeoScribVisu/
+
+Les données générées (`public/data/*.json`) sont versionnées : elles ne contiennent aucune donnée nominative. Pour mettre le site à jour, relancer `npm run import` puis committer et pousser `public/data/`. La GitHub Action « Publication GitHub Pages » redéploie automatiquement le dossier `public/` à chaque modification sur `main`.
+
+Le dossier `public/` peut aussi être copié tel quel sur n'importe quel autre hébergement statique.
 
 ## Données attendues
 
