@@ -25,7 +25,9 @@ async function charger() {
 // ------------------------------------------------------------------ état ↔ adresse (liens partageables)
 function lireAdresse() {
   const p = new URLSearchParams(location.hash.slice(1));
-  for (const k of ['page', 'epci', 'commune', 'typologie', 'reseau']) if (p.has(k)) etat[k] = p.get(k);
+  if (p.has('page')) etat.page = p.get('page');
+  // Un filtre absent de l'adresse est un filtre vide (sinon un lien garderait le filtre précédent).
+  for (const k of ['epci', 'commune', 'typologie', 'reseau']) etat[k] = p.get(k) ?? '';
   if (p.has('annee') && meta.annees.includes(Number(p.get('annee')))) etat.annee = Number(p.get('annee'));
   if (!meta.pages.some((pg) => pg.id === etat.page)) etat.page = meta.pages[0].id;
 }
@@ -71,6 +73,11 @@ function agreger(id, lignes, annee) {
       let s = 0, n = 0;
       for (const e of lignes) if (e.v[id] != null) { s += e.v[id]; n++; }
       return n ? { valeur: s, n } : null;
+    }
+    case 'moyenne': {
+      let s = 0, n = 0;
+      for (const e of lignes) if (e.v[id] != null) { s += e.v[id]; n++; }
+      return n ? { valeur: s / n, n } : null;
     }
     case 'oui':
     case 'renseigne': {
@@ -249,10 +256,12 @@ function htmlChiffres(page, lignes, interactif = true) {
     let valeur, detail = '';
     if (ind.agregation === 'oui' || ind.agregation === 'renseigne') {
       valeur = r ? nf().format(r.valeur) : '–';
-      detail = r ? `sur ${nf().format(r.total)} répondants` : 'aucune réponse';
+      detail = r ? `sur ${nb(r.total, 'répondant', 'répondants')}` : 'aucune réponse';
     } else {
       valeur = formater(id, r?.valeur);
-      if (r?.n != null) detail = `${nf().format(r.n)} réponses`;
+      if (r?.n != null) detail = ind.agregation === 'moyenne'
+        ? (r.n > 1 ? `moyenne de ${nf().format(r.n)} lieux` : '')
+        : nb(r.n, 'réponse', 'réponses');
     }
     // Évolution à périmètre constant : seuls les établissements qui ont répondu les deux années comptent,
     // sinon une non-réponse se lit comme une baisse.

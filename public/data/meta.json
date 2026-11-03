@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-03T21:55:48.443Z",
+ "genere_le": "2026-11-03T22:37:45.380Z",
  "annees": [
   2024,
   2025
@@ -72,11 +72,13 @@
    }
   },
   "jours_hebdo": {
-   "libelle": "Jours d'ouverture hebdomadaires",
-   "agregation": "somme",
+   "libelle": "Jours d'ouverture par semaine",
+   "agregation": "moyenne",
    "source": {
     "*": "C115"
    },
+   "decimales": 1,
+   "note": "Moyenne par lieu de lecture quand plusieurs lieux sont sélectionnés (le Looker additionnait les jours de tous les lieux).",
    "disponibilite": {
     "2024": true,
     "2025": true
@@ -1612,6 +1614,7 @@
    "tuiles": [
     "population",
     "heures_hebdo",
+    "jours_hebdo",
     "jours_annuels",
     "surface",
     "surface_reco",
@@ -1631,6 +1634,7 @@
     "surface",
     "surface_reco",
     "heures_hebdo",
+    "jours_hebdo",
     "taux_emprunteurs"
    ]
   },
@@ -2006,8 +2010,10 @@
     "ecoles_accueils",
     "ecoles_public",
     "colleges_classes",
+    "colleges_accueils",
     "colleges_public",
     "lycees_classes",
+    "lycees_accueils",
     "lycees_public",
     "superieur_public"
    ],

@@ -3,14 +3,14 @@
     "Chaque indicateur a un identifiant stable. 'source' donne, par année, le ou les codes de l'enquête SLL.",
     "Clé '*' = valable pour toutes les années non listées. Valeur null = non collecté cette année-là (affiché « non disponible »).",
     "Syntaxe : 'G123' (un code), 'G146+G149+G152' (somme de codes), 'H437|H441' (Oui si l'un des codes vaut Oui).",
-    "Agrégations : somme, oui (nombre de « Oui »), renseigne (nombre de champs remplis), ratio (numerateur / denominateur × facteur, calculé sur les totaux), population (population dédoublonnée par commune), categorie (répartition).",
+    "Agrégations : somme, moyenne (moyenne des répondants), oui (nombre de « Oui »), renseigne (nombre de champs remplis), ratio (numerateur / denominateur × facteur, calculé sur les totaux), population (population dédoublonnée par commune), categorie (répartition).",
     "Pour ajouter une année : déposer ses exports dans data/raw/<année>/, lancer npm run import, puis compléter ici les indicateurs signalés dans rapport-import.md."
   ],
   "indicateurs": {
     "population": { "libelle": "Population desservie (communes dédoublonnées)", "agregation": "population", "source": { "*": "A200" }, "unite": "hab." },
     "heures_hebdo": { "libelle": "Heures d'ouverture hebdomadaires tous publics", "agregation": "somme", "source": { "*": "C101" }, "unite": "h" },
     "jours_annuels": { "libelle": "Jours d'ouverture annuels", "agregation": "somme", "source": { "*": "C102" } },
-    "jours_hebdo": { "libelle": "Jours d'ouverture hebdomadaires", "agregation": "somme", "source": { "*": "C115" } },
+    "jours_hebdo": { "libelle": "Jours d'ouverture par semaine", "agregation": "moyenne", "source": { "*": "C115" }, "decimales": 1, "note": "Moyenne par lieu de lecture quand plusieurs lieux sont sélectionnés (le Looker additionnait les jours de tous les lieux)." },
     "surface": { "libelle": "Surface utile nette", "agregation": "somme", "source": { "*": "C301" }, "unite": "m²" },
     "surface_reco": { "libelle": "Surface recommandée SLL (0,07 m²/hab.)", "agregation": "ratio", "numerateur": "population", "facteur": 0.07, "unite": "m²" },
     "dimanche": { "libelle": "Ouvertes le dimanche", "agregation": "oui", "source": { "*": "C116" } },
@@ -161,7 +161,7 @@
   },
 
   "pages": [
-    { "id": "general", "titre": "Général", "tuiles": ["population", "heures_hebdo", "jours_annuels", "surface", "surface_reco", "taux_emprunteurs", "dimanche", "accessible", "gratuite"], "carte": true, "repartition": "typologie", "graphique": ["heures_hebdo", "surface"], "tableau": ["population", "surface", "surface_reco", "heures_hebdo", "taux_emprunteurs"] },
+    { "id": "general", "titre": "Général", "tuiles": ["population", "heures_hebdo", "jours_hebdo", "jours_annuels", "surface", "surface_reco", "taux_emprunteurs", "dimanche", "accessible", "gratuite"], "carte": true, "repartition": "typologie", "graphique": ["heures_hebdo", "surface"], "tableau": ["population", "surface", "surface_reco", "heures_hebdo", "jours_hebdo", "taux_emprunteurs"] },
     { "id": "sigb", "titre": "SIGB", "tuiles": ["catalogue_informatise", "dep_informatique"], "repartition": "sigb", "graphique": ["dep_informatique"], "tableau": ["catalogue_informatise", "sigb", "dep_informatique"] },
     { "id": "numerique", "titre": "Services numériques", "tuiles": ["postes_publics", "postes_pro", "tablettes", "liseuses", "consoles", "wifi", "reseaux_sociaux", "site_internet"], "graphique": ["postes_publics", "tablettes", "liseuses"], "tableau": ["postes_publics", "postes_pro", "tablettes", "liseuses", "consoles", "wifi"] },
     { "id": "rh1", "titre": "Personnel", "tuiles": ["personnel_total", "salaries", "benevoles", "benevoles_qualifies", "etp_total", "formation_jours", "formation_participants"], "graphique": ["salaries", "benevoles"], "tableau": ["personnel_total", "salaries", "benevoles", "etp_total", "formation_jours"] },
@@ -177,6 +177,6 @@
     { "id": "ressources", "titre": "Ressources et subventions", "tuiles": ["subventions", "ressources_privees", "recettes_propres", "droits_inscription", "droits_usage"], "graphique": ["subventions", "recettes_propres", "ressources_privees"], "tableau": ["subventions", "recettes_propres", "droits_inscription", "ressources_privees"] },
     { "id": "action_culturelle", "titre": "Action culturelle", "tuiles": ["expo_public", "conferences_public", "concerts_public", "contes_public", "clubs_public", "fetes_public", "autres_public"], "graphique": ["conferences_public", "contes_public", "concerts_public"], "tableau": ["expo", "conferences", "concerts", "contes", "clubs", "fetes", "autres_animations"] },
     { "id": "hors_murs", "titre": "Hors les murs et coopération", "tuiles": ["hors_murs_actions", "hors_murs_public", "portage_actions", "portage_public", "coop_locale", "coop_catalogue", "coop_navette", "coop_carte"], "graphique": ["hors_murs_actions", "portage_actions"], "tableau": ["hors_murs", "portage", "coop_locale", "coop_catalogue", "coop_portail", "coop_politique_doc", "coop_navette", "coop_carte", "coop_action_culturelle"] },
-    { "id": "scolaires", "titre": "Partenariats scolaires", "tuiles": ["ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges_classes", "colleges_public", "lycees_classes", "lycees_public", "superieur_public"], "graphique": ["ecoles_public", "colleges_public", "lycees_public"], "tableau": ["ecoles", "ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges", "lycees", "superieur"] }
+    { "id": "scolaires", "titre": "Partenariats scolaires", "tuiles": ["ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges_classes", "colleges_accueils", "colleges_public", "lycees_classes", "lycees_accueils", "lycees_public", "superieur_public"], "graphique": ["ecoles_public", "colleges_public", "lycees_public"], "tableau": ["ecoles", "ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges", "lycees", "superieur"] }
   ]
 }
