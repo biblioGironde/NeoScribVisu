@@ -215,7 +215,7 @@ function afficher() {
   ecrireAdresse();
   const page = pageCourante();
   const lignes = selection(etat.annee);
-  document.title = `${page.titre} – Lecture publique en Gironde`;
+  document.title = `${page.titre} – NeoScribVisu`;
   $('.entete-page h1').textContent = page.titre;
   const nbLieux = lignes.filter((e) => e.type === 'lieu').length;
   const nbReseaux = lignes.length - nbLieux;
