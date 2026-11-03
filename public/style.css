@@ -64,6 +64,7 @@ main { padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem; max-width: 84rem; outline
 .chiffre-unite { font: 400 1rem var(--sans); color: var(--gris); margin-left: .2rem; }
 .chiffre-libelle { font-size: .88rem; margin-top: .3rem; max-width: 22ch; }
 .chiffre-detail { font-size: .8rem; color: var(--gris); margin-top: .25rem; }
+.chiffre-repere { font-size: .84rem; margin-top: .3rem; padding-top: .3rem; border-top: 1px dashed var(--filet); }
 .evolution-hausse { color: var(--estuaire); }
 .evolution-baisse { color: var(--vin); }
 .chiffre.indisponible .chiffre-valeur { font-size: 1.05rem; font-family: var(--sans); color: var(--gris); padding-top: .55rem; }
@@ -196,6 +197,7 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
   .chiffre-valeur { font-size: 17pt; }
   .chiffre-libelle { font-size: 8.5pt; max-width: none; }
   .chiffre-detail { font-size: 7.5pt; }
+  .chiffre-repere { font-size: 7.8pt; margin-top: 1mm; padding-top: 1mm; }
   .chiffre.indisponible .chiffre-valeur { font-size: 9pt; padding-top: 1mm; }
 
   .imp-bloc { margin-top: 5mm; }

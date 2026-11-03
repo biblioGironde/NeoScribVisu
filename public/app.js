@@ -273,8 +273,21 @@ function htmlChiffres(page, lignes, interactif = true) {
     }
     return `<div class="chiffre"><div class="chiffre-valeur">${valeur}${unite(id) && r ? `<span class="chiffre-unite">${unite(id)}</span>` : ''}</div>
       <div class="chiffre-libelle">${echapper(ind.libelle)}${note}</div>
+      ${htmlRepere(id, lignes, r)}
       ${detail ? `<div class="chiffre-detail">${detail}</div>` : ''}</div>`;
   }).join('');
+}
+
+/** Valeur de comparaison affichée sous une tuile (ex. surface recommandée par le SLL),
+ *  calculée sur les seuls établissements qui renseignent l'indicateur principal. */
+function htmlRepere(id, lignes, r) {
+  const ind = meta.indicateurs[id];
+  if (!ind.repere || r?.valeur == null || !disponible(ind.repere, etat.annee)) return '';
+  const base = lignes.filter((e) => e.v[id] != null);
+  const ref = agreger(ind.repere, base, etat.annee)?.valeur;
+  if (!ref) return '';
+  const taux = Math.round((r.valeur / ref) * 100);
+  return `<div class="chiffre-repere">${echapper(ind.repere_libelle ?? meta.indicateurs[ind.repere].libelle)} : ${formater(ind.repere, ref)}${unite(ind.repere) ? ` ${unite(ind.repere)}` : ''}, soit <span class="${taux >= 100 ? 'evolution-hausse' : 'evolution-baisse'}">${nf().format(taux)} %</span> atteints</div>`;
 }
 
 function barres(items, max, formatValeur, classe = () => '', style = () => '') {

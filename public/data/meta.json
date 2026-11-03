@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-03T22:37:45.380Z",
+ "genere_le": "2026-11-03T22:41:28.597Z",
  "annees": [
   2024,
   2025
@@ -91,6 +91,8 @@
     "*": "C301"
    },
    "unite": "m²",
+   "repere": "surface_reco",
+   "repere_libelle": "Recommandation SLL",
    "disponibilite": {
     "2024": true,
     "2025": true
@@ -1617,7 +1619,6 @@
     "jours_hebdo",
     "jours_annuels",
     "surface",
-    "surface_reco",
     "taux_emprunteurs",
     "dimanche",
     "accessible",
