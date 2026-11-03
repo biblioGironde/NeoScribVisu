@@ -47,6 +47,7 @@
           </select>
         </label>
         <button type="button" class="reinitialiser">Réinitialiser</button>
+        <button type="button" class="ouvrir-export principal-action">Exporter en PDF</button>
       </form>
 
       <main id="contenu" tabindex="-1">
@@ -84,6 +85,43 @@
       </main>
     </div>
   </div>
+  <div id="impression" aria-hidden="true"></div>
+  <style id="style-impression"></style>
+
+  <dialog id="dialogue-export" aria-labelledby="titre-export">
+    <form method="dialog">
+      <h2 id="titre-export">Exporter en PDF</h2>
+      <p class="export-intro">Le document est mis en page en A4 paysage avec les filtres en cours :</p>
+      <p class="export-perimetre"></p>
+      <div class="export-colonnes">
+        <fieldset>
+          <legend>Pages à intégrer</legend>
+          <div class="export-raccourcis">
+            <button type="button" class="export-toutes">Tout cocher</button>
+            <button type="button" class="export-aucune">Tout décocher</button>
+          </div>
+          <div class="export-pages export-liste"></div>
+        </fieldset>
+        <div>
+          <fieldset>
+            <legend>Contenu de chaque page</legend>
+            <div class="export-elements export-liste"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Compléments</legend>
+            <div class="export-complements export-liste"></div>
+          </fieldset>
+        </div>
+      </div>
+      <p class="export-erreur" role="alert" hidden></p>
+      <p class="export-aide">La fenêtre d'impression va s'ouvrir : choisissez la destination « Enregistrer au format PDF ».</p>
+      <div class="export-actions">
+        <button type="button" class="export-annuler">Annuler</button>
+        <button type="submit" class="principal-action">Créer le PDF</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>

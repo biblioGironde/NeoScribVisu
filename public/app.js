@@ -8,7 +8,7 @@ const pct = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, signDispl
 const etat = { page: 'general', annee: null, epci: '', commune: '', typologie: '', reseau: '', tri: null, recherche: '' };
 let meta;
 const donnees = {}; // année → établissements
-let carte, coucheCarte;
+let carte; // carte de l'écran { carte, fond, couche }
 
 // ------------------------------------------------------------------ chargement
 async function charger() {
@@ -182,6 +182,7 @@ function preparerInterface() {
   });
   $('.bloc-tableau input').addEventListener('input', (ev) => { etat.recherche = ev.target.value; afficherTableau(); });
   $('.exporter').addEventListener('click', exporterCsv);
+  preparerExport();
 }
 
 function basculerMenu(ouvert) {
@@ -217,11 +218,7 @@ function afficher() {
   const lignes = selection(etat.annee);
   document.title = `${page.titre} – NeoScribVisu`;
   $('.entete-page h1').textContent = page.titre;
-  const nbLieux = lignes.filter((e) => e.type === 'lieu').length;
-  const nbReseaux = lignes.length - nbLieux;
-  const perimetre = etat.commune ? lignes[0]?.commune : etat.epci ? libelleEpci(etat.epci) : 'Gironde';
-  $('.perimetre').textContent = `${perimetre}, données ${etat.annee} : ${nb(nbLieux, 'lieu de lecture', 'lieux de lecture')}`
-    + (nbReseaux ? ` et ${nb(nbReseaux, 'réseau', 'réseaux')} multi-sites` : '') + (etat.typologie ? `, typologie ${etat.typologie}` : '') + '.';
+  $('.perimetre').textContent = textePerimetre(lignes);
   afficherAvertissement();
   afficherChiffres(page, lignes);
   afficherCarte(page, lignes);
@@ -232,23 +229,18 @@ function afficher() {
 }
 const nb = (n, un, plusieurs) => `${nf().format(n)} ${n > 1 ? plusieurs : un}`;
 
-function afficherAvertissement() {
-  const toutes = donnees[etat.annee];
-  const nonValides = toutes.filter((e) => e.avancement && e.avancement !== 'Validé');
-  const el = $('.avertissement');
-  if (!nonValides.length) { el.hidden = true; return; }
-  const enCours = nonValides.filter((e) => e.avancement === 'En cours').length;
-  el.hidden = false;
-  el.textContent = `Données ${etat.annee} provisoires : ${nonValides.length} fiches ne sont pas encore validées`
-    + (enCours ? `, dont ${enCours} encore en cours de saisie` : '') + '. Les chiffres peuvent évoluer.';
+// ------------------------------------------------------------------ fragments HTML (écran et export PDF)
+function texteNote(ind, interactif) {
+  if (!ind.note) return '';
+  return interactif ? ` <span class="note" title="${echapper(ind.note)}" tabindex="0" aria-label="Note : ${echapper(ind.note)}">ⓘ</span>` : ' *';
 }
 
-function afficherChiffres(page, lignes) {
+function htmlChiffres(page, lignes, interactif = true) {
   const precedente = meta.annees.filter((a) => a < etat.annee).at(-1);
   const lignesPrec = precedente ? selection(precedente) : null;
-  $('.chiffres').innerHTML = page.tuiles.map((id) => {
+  return page.tuiles.map((id) => {
     const ind = meta.indicateurs[id];
-    const note = ind.note ? ` <span class="note" title="${echapper(ind.note)}" tabindex="0" aria-label="Note : ${echapper(ind.note)}">ⓘ</span>` : '';
+    const note = texteNote(ind, interactif);
     if (!disponible(id, etat.annee)) {
       return `<div class="chiffre indisponible"><div class="chiffre-valeur">Non collecté en ${etat.annee}</div>
         <div class="chiffre-libelle">${echapper(ind.libelle)}${note}</div></div>`;
@@ -276,10 +268,16 @@ function afficherChiffres(page, lignes) {
   }).join('');
 }
 
-// ---- barres par territoire : par intercommunalité, ou par commune quand une intercommunalité est choisie
-function afficherTerritoires(page, lignes) {
+function barres(items, max, formatValeur, classe = () => '', style = () => '') {
+  return items.map((x) => `
+    <div class="barre${classe(x)}"><span class="barre-nom" title="${echapper(x.nom)}">${echapper(x.nom)}</span>
+    <span class="barre-piste"><span class="barre-remplie" style="display:block;width:${(x.v / max) * 82}%${style(x)}"></span>
+    <span class="barre-valeur" style="left:${(x.v / max) * 82}%">${formatValeur(x.v)}</span></span></div>`).join('');
+}
+
+/** Barres par intercommunalité, ou par commune quand une intercommunalité est choisie. */
+function territoires(page, lignes) {
   const parCommune = Boolean(etat.epci);
-  $('.bloc-territoires h2').textContent = parCommune ? 'Par commune' : 'Par intercommunalité';
   const groupes = new Map();
   for (const e of lignes) {
     const cle = parCommune ? e.insee : e.epci;
@@ -292,94 +290,53 @@ function afficherTerritoires(page, lignes) {
     const valeurs = [...groupes].map(([cle, g]) => ({ cle, nom: g.nom, v: agreger(id, g.lignes, etat.annee)?.valeur ?? 0 }))
       .filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
     const max = Math.max(...valeurs.map((x) => x.v), 1);
-    return `<div class="serie"><h3>${echapper(ind.libelle)}${unite(id) ? ` (${unite(id)})` : ''}</h3>${valeurs.map((x) => `
-      <div class="barre${parCommune && x.cle === etat.commune ? ' selection' : ''}"><span class="barre-nom" title="${echapper(x.nom)}">${echapper(x.nom)}</span>
-      <span class="barre-piste"><span class="barre-remplie" style="display:block;width:${(x.v / max) * 82}%"></span>
-      <span class="barre-valeur" style="left:${(x.v / max) * 82}%">${formater(id, x.v)}</span></span></div>`).join('') || '<p class="chiffre-detail">Aucune donnée.</p>'}</div>`;
+    return `<div class="serie"><h3>${echapper(ind.libelle)}${unite(id) ? ` (${unite(id)})` : ''}</h3>${
+      barres(valeurs, max, (v) => formater(id, v), (x) => (parCommune && x.cle === etat.commune ? ' selection' : '')) || '<p class="chiffre-detail">Aucune donnée.</p>'}</div>`;
   });
-  $('.territoires').innerHTML = series.join('');
-  $('.bloc-territoires').hidden = !series.length || groupes.size < 2;
+  return { titre: parCommune ? 'Par commune' : 'Par intercommunalité', html: series.join(''), visible: series.length > 0 && groupes.size > 1 };
 }
 
-function afficherRepartition(page, lignes) {
-  const bloc = $('.bloc-repartition');
-  if (!page.repartition) { bloc.hidden = true; return; }
-  bloc.hidden = false;
+function repartition(page, lignes) {
+  if (!page.repartition) return null;
   let titre, comptes;
   if (page.repartition === 'typologie') {
     titre = 'Lieux de lecture par typologie';
     comptes = {};
     for (const e of lignes) if (e.type === 'lieu' && e.typologie) comptes[e.typologie] = (comptes[e.typologie] ?? 0) + 1;
-    comptes = Object.fromEntries(Object.entries(comptes).sort());
+    comptes = Object.entries(comptes).sort();
   } else {
     titre = meta.indicateurs[page.repartition].libelle;
-    comptes = agreger(page.repartition, lignes, etat.annee)?.categories ?? {};
-    comptes = Object.fromEntries(Object.entries(comptes).sort((a, b) => b[1] - a[1]));
+    comptes = Object.entries(agreger(page.repartition, lignes, etat.annee)?.categories ?? {}).sort((a, b) => b[1] - a[1]);
   }
-  $('h2', bloc).textContent = titre;
-  const max = Math.max(...Object.values(comptes), 1);
-  $('.repartition').innerHTML = Object.entries(comptes).map(([k, n]) => `
-    <div class="barre"><span class="barre-nom">${page.repartition === 'typologie' ? `Typologie ${k}` : echapper(k)}</span>
-    <span class="barre-piste"><span class="barre-remplie" style="display:block;width:${(n / max) * 82}%${page.repartition === 'typologie' ? `;background:var(--typo-${k.toLowerCase()})` : ''}"></span>
-    <span class="barre-valeur" style="left:${(n / max) * 82}%">${nf().format(n)}</span></span></div>`).join('') || '<p class="chiffre-detail">Aucune donnée.</p>';
+  const typo = page.repartition === 'typologie';
+  const items = comptes.map(([k, n]) => ({ cle: k, nom: typo ? `Typologie ${k}` : k, v: n }));
+  const max = Math.max(...items.map((x) => x.v), 1);
+  return { titre, html: barres(items, max, (v) => nf().format(v), () => '', (x) => (typo ? `;background:var(--typo-${x.cle.toLowerCase()})` : '')) || '<p class="chiffre-detail">Aucune donnée.</p>' };
 }
 
-function afficherCarte(page, lignes) {
-  const bloc = $('.bloc-carte');
-  if (!page.carte || !window.L) { bloc.hidden = true; return; }
-  bloc.hidden = false;
-  if (!carte) {
-    carte = L.map('carte', { scrollWheelZoom: false }).setView([44.85, -0.55], 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 17, attribution: '© contributeurs OpenStreetMap',
-    }).addTo(carte);
-    coucheCarte = L.layerGroup().addTo(carte);
-  }
-  coucheCarte.clearLayers();
-  const couleur = (t) => getComputedStyle(document.documentElement).getPropertyValue(`--typo-${(t ?? 'e').toLowerCase()}`).trim() || '#888';
-  const points = lignes.filter((e) => e.type === 'lieu' && e.lat && e.lon);
-  for (const e of points) {
-    L.circleMarker([e.lat, e.lon], { radius: 6, weight: 1, color: '#1e2a33', fillColor: couleur(e.typologie), fillOpacity: .9 })
-      .bindPopup(`<strong>${echapper(e.nom)}</strong><br>${echapper(e.commune)}<br>Typologie ${e.typologie ?? '–'}`)
-      .addTo(coucheCarte);
-  }
-  if (points.length) carte.fitBounds(points.map((e) => [e.lat, e.lon]), { padding: [20, 20], maxZoom: 13 });
-  setTimeout(() => carte.invalidateSize(), 0);
-  $('.legende-carte').innerHTML = ['A', 'B', 'C', 'D', 'E'].map((t) => `<span><span class="pastille" style="background:var(--typo-${t.toLowerCase()})"></span>Typologie ${t}</span>`).join('')
-    + `<span>${nf().format(points.length)} lieux localisés sur ${nf().format(lignes.filter((e) => e.type === 'lieu').length)}</span>`;
-}
-
-// ---- tableau détaillé
-function colonnesTableau() {
-  return pageCourante().tableau ?? [];
-}
-function lignesTableau() {
-  const cols = colonnesTableau();
-  const q = etat.recherche.trim().toLowerCase();
-  let lignes = selection(etat.annee).filter((e) => !q || `${e.nom} ${e.commune}`.toLowerCase().includes(q));
-  const t = etat.tri;
+function trierLignes(lignes, tri) {
   const cle = (e) => {
-    if (!t || t.col === 'nom') return `${e.commune} ${e.nom}`;
-    if (t.col === 'epci') return libelleEpci(e.epci);
-    if (t.col === 'typologie') return e.typologie ?? '';
-    const v = valeurLigne(t.col, e, etat.annee);
+    if (!tri || tri.col === 'nom') return `${e.commune} ${e.nom}`;
+    if (tri.col === 'epci') return libelleEpci(e.epci);
+    if (tri.col === 'typologie') return e.typologie ?? '';
+    const v = valeurLigne(tri.col, e, etat.annee);
     return v == null ? -Infinity : v;
   };
-  lignes = [...lignes].sort((a, b) => {
+  return [...lignes].sort((a, b) => {
     const x = cle(a), y = cle(b);
     const c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'fr');
-    return t?.desc ? -c : c;
+    return tri?.desc ? -c : c;
   });
-  return { cols, lignes };
 }
-function afficherTableau() {
-  const { cols, lignes } = lignesTableau();
+
+function htmlTableau(cols, lignes, tri, interactif = true) {
   const entete = (col, lib, texte) => {
-    const actif = etat.tri?.col === col;
-    const sens = actif ? (etat.tri.desc ? 'descending' : 'ascending') : 'none';
-    return `<th class="${texte ? 'texte' : ''}" aria-sort="${sens}"><button type="button" data-col="${col}">${echapper(lib)}${actif ? (etat.tri.desc ? ' ▼' : ' ▲') : ''}</button></th>`;
+    if (!interactif) return `<th class="${texte ? 'texte' : ''}">${echapper(lib)}</th>`;
+    const actif = tri?.col === col;
+    const sens = actif ? (tri.desc ? 'descending' : 'ascending') : 'none';
+    return `<th class="${texte ? 'texte' : ''}" aria-sort="${sens}"><button type="button" data-col="${col}">${echapper(lib)}${actif ? (tri.desc ? ' ▼' : ' ▲') : ''}</button></th>`;
   };
-  const html = `<thead><tr>${entete('nom', 'Établissement', true)}${entete('epci', 'Intercommunalité', true)}${entete('typologie', 'Typo.', true)}
+  return `<thead><tr>${entete('nom', 'Établissement', true)}${entete('epci', 'Intercommunalité', true)}${entete('typologie', 'Typo.', true)}
     ${cols.map((c) => entete(c, meta.indicateurs[c].libelle + (unite(c) ? ` (${unite(c)})` : ''))).join('')}</tr></thead>
     <tbody>${lignes.map((e) => `<tr class="${e.type}"><td title="${echapper(e.nom)}">${echapper(e.commune)} – ${echapper(e.nom)}</td>
       <td class="texte">${echapper(libelleEpci(e.epci))}</td><td class="texte">${e.typologie ?? ''}</td>
@@ -388,8 +345,119 @@ function afficherTableau() {
         if (v === undefined) return '<td class="vide">non collecté</td>';
         return `<td class="${v == null ? 'vide' : ''}${meta.indicateurs[c].agregation === 'categorie' ? ' texte' : ''}">${formater(c, v)}</td>`;
       }).join('')}</tr>`).join('')}</tbody>`;
+}
+
+const NOTES_GENERALES = [
+  'Les sommes additionnent les lieux de lecture et, pour les communes multi-sites, la ligne « réseau » où une partie des données (personnel, budgets) est saisie.',
+  'La population n\'est comptée qu\'une fois par commune, même si la commune compte plusieurs lieux de lecture.',
+  'Les moyennes (entrées par emprunteur, livres par emprunteur, dépense par habitant) divisent des totaux, sur les seuls établissements qui renseignent les deux valeurs.',
+  'Les évolutions sur un an sont calculées à périmètre constant : seuls les établissements qui ont renseigné l\'indicateur les deux années sont comparés. Les totaux affichés, eux, dépendent du nombre de répondants de l\'année.',
+  'Le questionnaire change selon les années : un indicateur absent est signalé « non collecté », jamais remplacé par zéro.',
+];
+function notesPour(pages) {
+  const notes = [...NOTES_GENERALES];
+  for (const page of pages) {
+    for (const id of [...page.tuiles, ...(page.graphique ?? [])]) {
+      const ind = meta.indicateurs[id];
+      if (ind.note && !notes.includes(`${ind.libelle} : ${ind.note}`)) notes.push(`${ind.libelle} : ${ind.note}`);
+    }
+  }
+  return notes;
+}
+
+function textePerimetre(lignes) {
+  const nbLieux = lignes.filter((e) => e.type === 'lieu').length;
+  const nbReseaux = lignes.length - nbLieux;
+  const lieu = etat.commune ? lignes[0]?.commune : etat.epci ? libelleEpci(etat.epci) : 'Gironde';
+  return `${lieu}, données ${etat.annee} : ${nb(nbLieux, 'lieu de lecture', 'lieux de lecture')}`
+    + (nbReseaux ? ` et ${nb(nbReseaux, 'réseau', 'réseaux')} multi-sites` : '')
+    + (etat.typologie ? `, typologie ${etat.typologie}` : '')
+    + (etat.reseau ? `, ${etat.reseau === '1' ? 'membres' : 'hors'} du réseau biblio.gironde` : '') + '.';
+}
+
+function texteProvisoire() {
+  const nonValides = donnees[etat.annee].filter((e) => e.avancement && e.avancement !== 'Validé');
+  if (!nonValides.length) return '';
+  const enCours = nonValides.filter((e) => e.avancement === 'En cours').length;
+  return `Données ${etat.annee} provisoires : ${nonValides.length} fiches ne sont pas encore validées`
+    + (enCours ? `, dont ${enCours} encore en cours de saisie` : '') + '. Les chiffres peuvent évoluer.';
+}
+
+// ------------------------------------------------------------------ rendu à l'écran
+function afficherAvertissement() {
+  const texte = texteProvisoire();
+  const el = $('.avertissement');
+  el.hidden = !texte;
+  el.textContent = texte;
+}
+
+function afficherChiffres(page, lignes) {
+  $('.chiffres').innerHTML = htmlChiffres(page, lignes);
+}
+
+function afficherTerritoires(page, lignes) {
+  const t = territoires(page, lignes);
+  $('.bloc-territoires h2').textContent = t.titre;
+  $('.territoires').innerHTML = t.html;
+  $('.bloc-territoires').hidden = !t.visible;
+}
+
+function afficherRepartition(page, lignes) {
+  const bloc = $('.bloc-repartition');
+  const r = repartition(page, lignes);
+  bloc.hidden = !r;
+  if (!r) return;
+  $('h2', bloc).textContent = r.titre;
+  $('.repartition').innerHTML = r.html;
+}
+
+const couleurTypo = (t) => getComputedStyle(document.documentElement).getPropertyValue(`--typo-${(t ?? 'e').toLowerCase()}`).trim() || '#888';
+const legendeCarte = (points, lignes) => ['A', 'B', 'C', 'D', 'E'].map((t) => `<span><span class="pastille" style="background:var(--typo-${t.toLowerCase()})"></span>Typologie ${t}</span>`).join('')
+  + `<span>${nf().format(points.length)} lieux localisés sur ${nf().format(lignes.filter((e) => e.type === 'lieu').length)}</span>`;
+
+/** Dessine les lieux de lecture sur une carte Leaflet. Renvoie la couche de fond (pour attendre son chargement). */
+function dessinerCarte(conteneur, lignes, options = {}) {
+  const m = L.map(conteneur, { scrollWheelZoom: false, zoomControl: !options.statique, attributionControl: true, ...(options.statique ? { dragging: false, zoomAnimation: false, fadeAnimation: false, zoomSnap: 0.25 } : {}) });
+  const fond = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© contributeurs OpenStreetMap' }).addTo(m);
+  const couche = L.layerGroup().addTo(m);
+  return { carte: m, fond, couche };
+}
+function placerPoints(c, lignes, couleurs) {
+  c.couche.clearLayers();
+  const points = lignes.filter((e) => e.type === 'lieu' && e.lat && e.lon);
+  for (const e of points) {
+    L.circleMarker([e.lat, e.lon], { radius: 6, weight: 1, color: '#1e2a33', fillColor: couleurs(e.typologie), fillOpacity: .9 })
+      .bindPopup(`<strong>${echapper(e.nom)}</strong><br>${echapper(e.commune)}<br>Typologie ${e.typologie ?? '–'}`)
+      .addTo(c.couche);
+  }
+  if (points.length) c.carte.fitBounds(points.map((e) => [e.lat, e.lon]), { padding: [20, 20], maxZoom: 13, animate: false });
+  else c.carte.setView([44.85, -0.55], 8, { animate: false });
+  return points;
+}
+
+function afficherCarte(page, lignes) {
+  const bloc = $('.bloc-carte');
+  if (!page.carte || !window.L) { bloc.hidden = true; return; }
+  bloc.hidden = false;
+  carte ??= dessinerCarte('carte', lignes);
+  const points = placerPoints(carte, lignes, couleurTypo);
+  setTimeout(() => carte.carte.invalidateSize(), 0);
+  $('.legende-carte').innerHTML = legendeCarte(points, lignes);
+}
+
+// ---- tableau détaillé
+function colonnesTableau() {
+  return pageCourante().tableau ?? [];
+}
+function lignesTableau() {
+  const q = etat.recherche.trim().toLowerCase();
+  const lignes = selection(etat.annee).filter((e) => !q || `${e.nom} ${e.commune}`.toLowerCase().includes(q));
+  return { cols: colonnesTableau(), lignes: trierLignes(lignes, etat.tri) };
+}
+function afficherTableau() {
+  const { cols, lignes } = lignesTableau();
   const table = $('.bloc-tableau table');
-  table.innerHTML = html;
+  table.innerHTML = htmlTableau(cols, lignes, etat.tri);
   table.onclick = (ev) => {
     const b = ev.target.closest('button[data-col]');
     if (!b) return;
@@ -418,18 +486,147 @@ function exporterCsv() {
 }
 
 function afficherASavoir(page) {
-  const notes = [
-    'Les sommes additionnent les lieux de lecture et, pour les communes multi-sites, la ligne « réseau » où une partie des données (personnel, budgets) est saisie.',
-    'La population n\'est comptée qu\'une fois par commune, même si la commune compte plusieurs lieux de lecture.',
-    'Les moyennes (entrées par emprunteur, livres par emprunteur, dépense par habitant) divisent des totaux, sur les seuls établissements qui renseignent les deux valeurs.',
-    'Les évolutions sur un an sont calculées à périmètre constant : seuls les établissements qui ont renseigné l\'indicateur les deux années sont comparés. Les totaux affichés, eux, dépendent du nombre de répondants de l\'année.',
-    'Le questionnaire change selon les années : un indicateur absent est signalé « non collecté », jamais remplacé par zéro.',
-  ];
-  for (const id of [...page.tuiles, ...(page.graphique ?? [])]) {
-    const ind = meta.indicateurs[id];
-    if (ind.note && !notes.includes(`${ind.libelle} : ${ind.note}`)) notes.push(`${ind.libelle} : ${ind.note}`);
+  $('.a-savoir ul').innerHTML = notesPour([page]).map((n) => `<li>${echapper(n)}</li>`).join('');
+}
+
+// ------------------------------------------------------------------ export PDF (A4 paysage, via l'impression du navigateur)
+const ELEMENTS_EXPORT = [
+  { id: 'chiffres', libelle: 'Chiffres clés', defaut: true },
+  { id: 'carte', libelle: 'Carte des lieux de lecture (page Général)', defaut: true },
+  { id: 'repartition', libelle: 'Répartitions (typologie, SIGB)', defaut: true },
+  { id: 'graphiques', libelle: 'Graphiques par territoire', defaut: true },
+  { id: 'tableau', libelle: 'Tableau par établissement', defaut: false },
+];
+const COMPLEMENTS_EXPORT = [
+  { id: 'garde', libelle: 'Page de garde (titre, périmètre, date)', defaut: true },
+  { id: 'methode', libelle: 'Méthode et limites', defaut: true },
+];
+const COULEURS_IMPRESSION = { a: '#1d4e52', b: '#2f6f73', c: '#5c9c98', d: '#a9c9c3', e: '#d9c9a3' };
+const CLE_CHOIX = 'neoscribvisu-export';
+
+function choixMemorises() {
+  try { return JSON.parse(localStorage.getItem(CLE_CHOIX)) ?? {}; } catch { return {}; }
+}
+
+function ouvrirExport() {
+  const dlg = $('#dialogue-export');
+  const memo = choixMemorises();
+  const coche = (groupe, id, defaut) => (memo[groupe]?.includes(id) ?? defaut) ? 'checked' : '';
+  $('.export-pages', dlg).innerHTML = meta.pages.map((p) => `<label><input type="checkbox" name="page" value="${p.id}" ${p.id === etat.page ? 'checked' : ''}> ${echapper(p.titre)}</label>`).join('');
+  const nbLignes = selection(etat.annee).length;
+  $('.export-elements', dlg).innerHTML = ELEMENTS_EXPORT.map((e) => `<label><input type="checkbox" name="element" value="${e.id}" ${coche('elements', e.id, e.defaut)}> ${echapper(e.libelle)}${e.id === 'tableau' ? ` <span class="aide">${nf().format(nbLignes)} lignes par page cochée, soit plusieurs feuilles</span>` : ''}</label>`).join('');
+  $('.export-complements', dlg).innerHTML = COMPLEMENTS_EXPORT.map((e) => `<label><input type="checkbox" name="complement" value="${e.id}" ${coche('complements', e.id, e.defaut)}> ${echapper(e.libelle)}</label>`).join('');
+  $('.export-perimetre', dlg).textContent = textePerimetre(selection(etat.annee));
+  $('.export-erreur', dlg).hidden = true;
+  dlg.showModal();
+}
+
+function lireChoix(form) {
+  const valeurs = (nom) => [...form.querySelectorAll(`input[name="${nom}"]:checked`)].map((i) => i.value);
+  return { pages: valeurs('page'), elements: valeurs('element'), complements: valeurs('complement') };
+}
+
+async function genererPdf(choix) {
+  const lignes = selection(etat.annee);
+  const pages = meta.pages.filter((p) => choix.pages.includes(p.id));
+  const avec = (id) => choix.elements.includes(id);
+  const perimetre = textePerimetre(lignes);
+  const provisoire = texteProvisoire();
+  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const sections = [];
+
+  if (choix.complements.includes('garde')) {
+    sections.push(`<section class="imp-garde">
+      <p class="imp-marque">NeoScribVisu</p>
+      <h1>Lecture publique en Gironde</h1>
+      <p class="imp-perimetre">${echapper(perimetre)}</p>
+      ${provisoire ? `<p class="imp-avertissement">${echapper(provisoire)}</p>` : ''}
+      <h2>Contenu</h2>
+      <ol class="imp-sommaire">${pages.map((p) => `<li>${echapper(p.titre)}</li>`).join('')}${choix.complements.includes('methode') ? '<li>Méthode et limites</li>' : ''}</ol>
+      <p class="imp-source">Édité le ${date}. Source : enquête annuelle sur les bibliothèques des collectivités territoriales, Service du livre et de la lecture, ministère de la Culture.</p>
+    </section>`);
   }
-  $('.a-savoir ul').innerHTML = notes.map((n) => `<li>${echapper(n)}</li>`).join('');
+
+  const cartes = [];
+  pages.forEach((page, i) => {
+    const blocs = [`<header class="imp-entete"><h1>${echapper(page.titre)}</h1><p>${echapper(perimetre)}</p></header>`];
+    if (avec('chiffres')) blocs.push(`<div class="chiffres">${htmlChiffres(page, lignes, false)}</div>`);
+    if (avec('carte') && page.carte && window.L) {
+      cartes.push(`imp-carte-${i}`);
+      blocs.push(`<div class="imp-bloc imp-bloc-carte"><h2>Carte des lieux de lecture</h2><div class="imp-carte" id="imp-carte-${i}"></div><p class="legende-carte" data-legende="imp-carte-${i}"></p></div>`);
+    }
+    const r = avec('repartition') ? repartition(page, lignes) : null;
+    if (r) blocs.push(`<div class="imp-bloc"><h2>${echapper(r.titre)}</h2><div class="repartition">${r.html}</div></div>`);
+    if (avec('graphiques')) {
+      const t = territoires(page, lignes);
+      if (t.visible) blocs.push(`<div class="imp-bloc"><h2>${t.titre}</h2><div class="territoires">${t.html}</div></div>`);
+    }
+    if (avec('tableau')) {
+      const tri = page.id === etat.page ? etat.tri : null;
+      blocs.push(`<div class="imp-bloc imp-bloc-tableau"><h2>Détail par établissement</h2><table>${htmlTableau(page.tableau ?? [], trierLignes(lignes, tri), tri, false)}</table></div>`);
+    }
+    const notes = page.tuiles.some((id) => meta.indicateurs[id].note) && avec('chiffres')
+      ? `<p class="imp-renvoi">* Voir « Méthode et limites ».</p>` : '';
+    sections.push(`<section class="imp-page">${blocs.join('')}${notes}</section>`);
+  });
+
+  if (choix.complements.includes('methode')) {
+    sections.push(`<section class="imp-page imp-methode"><header class="imp-entete"><h1>Méthode et limites</h1></header>
+      <ul>${notesPour(pages).map((n) => `<li>${echapper(n)}</li>`).join('')}</ul></section>`);
+  }
+
+  const zone = $('#impression');
+  zone.innerHTML = sections.join('');
+  // Pied de page imprimé : périmètre, date et numéro de page.
+  const pied = `NeoScribVisu – ${perimetre.split(':')[0]} – ${date}`.replace(/["\\]/g, '');
+  $('#style-impression').textContent = `@page { @bottom-left { content: "${pied}"; font: 7.5pt "Public Sans", sans-serif; color: #5f6b74; } @bottom-right { content: "Page " counter(page) " sur " counter(pages); font: 7.5pt "Public Sans", sans-serif; color: #5f6b74; } }`;
+
+  // Les cartes sont dessinées hors écran à la taille de la page, puis on attend leurs tuiles.
+  const instances = [];
+  await Promise.all(cartes.map((id) => new Promise((resoudre) => {
+    const c = dessinerCarte(id, lignes, { statique: true });
+    instances.push(c.carte);
+    const points = placerPoints(c, lignes, (t) => COULEURS_IMPRESSION[(t ?? 'e').toLowerCase()] ?? '#888');
+    $(`[data-legende="${id}"]`).innerHTML = legendeCarte(points, lignes);
+    const fin = setTimeout(resoudre, 6000);
+    c.fond.on('load', () => { clearTimeout(fin); resoudre(); });
+  })));
+
+  const nettoyer = () => {
+    instances.forEach((m) => m.remove());
+    zone.innerHTML = '';
+    removeEventListener('afterprint', nettoyer);
+  };
+  addEventListener('afterprint', nettoyer);
+  document.title = `NeoScribVisu ${etat.annee} – ${perimetre.split(',')[0]}`;
+  print();
+  document.title = `${pageCourante().titre} – NeoScribVisu`;
+}
+
+function preparerExport() {
+  const dlg = $('#dialogue-export');
+  $('.ouvrir-export').addEventListener('click', ouvrirExport);
+  $('.export-toutes', dlg).addEventListener('click', () => dlg.querySelectorAll('input[name="page"]').forEach((i) => { i.checked = true; }));
+  $('.export-aucune', dlg).addEventListener('click', () => dlg.querySelectorAll('input[name="page"]').forEach((i) => { i.checked = false; }));
+  $('.export-annuler', dlg).addEventListener('click', () => dlg.close());
+  $('form', dlg).addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const choix = lireChoix(ev.target);
+    const erreur = $('.export-erreur', dlg);
+    if (!choix.pages.length) { erreur.textContent = 'Cochez au moins une page.'; erreur.hidden = false; return; }
+    if (!choix.elements.length) { erreur.textContent = 'Cochez au moins un élément à intégrer.'; erreur.hidden = false; return; }
+    try { localStorage.setItem(CLE_CHOIX, JSON.stringify({ elements: choix.elements, complements: choix.complements })); } catch { /* stockage indisponible */ }
+    const bouton = $('button[type="submit"]', dlg);
+    bouton.disabled = true;
+    bouton.textContent = 'Préparation…';
+    try {
+      await genererPdf(choix);
+      dlg.close();
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = 'Créer le PDF';
+    }
+  });
 }
 
 addEventListener('hashchange', () => { lireAdresse(); afficher(); });

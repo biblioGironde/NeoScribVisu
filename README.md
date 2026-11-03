@@ -18,6 +18,12 @@ npm run verifier   # contrôle les totaux 2024 contre le Looker d'origine
 npm start          # http://localhost:8080
 ```
 
+## Export PDF
+
+Le bouton « Exporter en PDF » ouvre une liste de choix : pages à intégrer, contenu de chaque page (chiffres clés, carte, répartitions, graphiques par territoire, tableau par établissement), page de garde et méthode. Le document est mis en page en A4 paysage avec les filtres en cours, puis la fenêtre d'impression du navigateur s'ouvre : choisir « Enregistrer au format PDF ». Les choix de contenu sont mémorisés dans le navigateur pour l'export suivant.
+
+Le pied de page (périmètre, date, numéro de page) s'affiche avec Chrome et Edge.
+
 ## Publication
 
 Le site est publié sur GitHub Pages : https://bibliogironde.github.io/NeoScribVisu/

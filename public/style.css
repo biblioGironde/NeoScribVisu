@@ -126,3 +126,102 @@ tr.reseau td:first-child::after { content: " réseau"; font-size: .72rem; color:
 @media (prefers-reduced-motion: no-preference) {
   .barre-remplie { transition: width .35s ease; }
 }
+
+/* ---- Bouton principal et fenêtre d'export */
+.ouvrir-export { margin-left: auto; }
+.principal-action { background: var(--estuaire); color: var(--papier); border-color: var(--estuaire); }
+.principal-action:hover { background: color-mix(in srgb, var(--estuaire) 85%, var(--encre)); }
+.principal-action:disabled { opacity: .6; cursor: progress; }
+
+#dialogue-export { border: 1px solid var(--filet); border-radius: 6px; padding: 1.5rem 1.75rem; background: var(--papier); color: var(--encre); width: min(56rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); }
+#dialogue-export::backdrop { background: rgb(20 28 33 / .45); }
+#dialogue-export h2 { font: 600 1.4rem var(--serif); margin: 0 0 .5rem; }
+.export-intro { margin: 0; color: var(--gris); font-size: .9rem; }
+.export-perimetre { margin: .2rem 0 1.2rem; font-weight: 600; }
+.export-colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
+fieldset { border: 0; border-top: 2px solid var(--encre); margin: 0 0 1.1rem; padding: .6rem 0 0; min-width: 0; }
+legend { font-weight: 600; padding: 0 .5rem 0 0; }
+.export-liste { display: flex; flex-direction: column; gap: .3rem; }
+.export-liste label { display: flex; gap: .5rem; align-items: baseline; font-size: .92rem; cursor: pointer; }
+.export-liste input { accent-color: var(--estuaire); }
+.export-pages { columns: 2; display: block; }
+.export-pages label { break-inside: avoid; padding: .12rem 0; }
+.export-raccourcis { display: flex; gap: .5rem; margin-bottom: .6rem; }
+.export-raccourcis button { font-size: .8rem; padding: .2rem .55rem; }
+.aide { display: block; font-size: .8rem; color: var(--gris); }
+.export-liste label:has(.aide) { flex-wrap: wrap; }
+.export-erreur { color: var(--vin); font-weight: 600; margin: 0 0 .6rem; }
+.export-aide { font-size: .85rem; color: var(--gris); margin: .2rem 0 1rem; }
+.export-actions { display: flex; justify-content: flex-end; gap: .75rem; }
+@media (max-width: 700px) {
+  .export-colonnes { grid-template-columns: 1fr; }
+  .export-pages { columns: 1; }
+}
+
+/* ---- Zone d'impression : hors écran à l'écran (pour que les cartes aient une taille), seule visible à l'impression */
+#impression { position: absolute; left: -12000px; top: 0; width: 273mm; }
+#impression .imp-carte { height: 92mm; }
+
+@page { size: A4 landscape; margin: 11mm 12mm 14mm; }
+
+@media print {
+  :root {
+    --papier: #ffffff; --surface: #ffffff; --encre: #1e2a33; --gris: #5f6b74; --filet: #d4d4cc;
+    --estuaire: #2f6f73; --estuaire-clair: #d5e6e4; --vin: #8c2f4b; --sable: #e7dcc2;
+    --typo-a: #1d4e52; --typo-b: #2f6f73; --typo-c: #5c9c98; --typo-d: #a9c9c3; --typo-e: #d9c9a3;
+    color-scheme: light;
+  }
+  html, body { background: #fff; }
+  body { font-size: 9pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .cadre, dialog, .evitement { display: none !important; }
+  #impression { position: static; width: auto; }
+
+  .imp-page { break-before: page; }
+  .imp-garde + .imp-page, #impression > .imp-page:first-child { break-before: auto; }
+  .imp-entete { border-bottom: 2px solid var(--encre); padding-bottom: 2mm; margin-bottom: 4mm; display: flex; align-items: baseline; justify-content: space-between; gap: 8mm; }
+  .imp-entete h1 { font: 600 17pt/1.1 var(--serif); margin: 0; }
+  .imp-entete p { margin: 0; color: var(--gris); font-size: 8.5pt; text-align: right; }
+
+  .imp-garde { height: 180mm; display: flex; flex-direction: column; justify-content: center; padding-left: 12mm; border-left: 3mm solid var(--estuaire); }
+  .imp-marque { font: 600 11pt var(--sans); color: var(--estuaire); margin: 0 0 3mm; }
+  .imp-garde h1 { font: 600 32pt/1.05 var(--serif); margin: 0 0 6mm; }
+  .imp-perimetre { font-size: 13pt; margin: 0 0 4mm; max-width: 200mm; }
+  .imp-avertissement { border-left: 2px solid var(--vin); padding-left: 3mm; max-width: 200mm; margin: 0 0 6mm; }
+  .imp-garde h2 { font: 600 11pt var(--sans); margin: 4mm 0 1mm; }
+  .imp-sommaire { columns: 2; max-width: 200mm; margin: 0 0 8mm; padding-left: 5mm; }
+  .imp-source { color: var(--gris); font-size: 8.5pt; max-width: 200mm; margin: 0; }
+
+  .chiffres { margin: 0 0 3mm; grid-template-columns: repeat(5, 1fr); border-top-width: 1px; }
+  .chiffre { padding: 2mm 3mm 2.5mm 0; break-inside: avoid; }
+  .chiffre-valeur { font-size: 17pt; }
+  .chiffre-libelle { font-size: 8.5pt; max-width: none; }
+  .chiffre-detail { font-size: 7.5pt; }
+  .chiffre.indisponible .chiffre-valeur { font-size: 9pt; padding-top: 1mm; }
+
+  .imp-bloc { margin-top: 5mm; }
+  .imp-bloc h2 { font: 600 11.5pt var(--serif); margin: 0 0 2mm; break-after: avoid; }
+  .territoires { grid-template-columns: repeat(2, 1fr); gap: 3mm 10mm; }
+  .serie { break-inside: avoid; }
+  .serie h3 { font-size: 8.5pt; margin-bottom: 1.5mm; }
+  .barre { grid-template-columns: 55mm 1fr; font-size: 7.5pt; padding: 0; gap: 2mm; }
+  .barre-piste, .barre-valeur { height: 3.4mm; line-height: 3.4mm; }
+  .repartition { max-width: 170mm; }
+
+  .imp-bloc-carte { break-inside: avoid; }
+  .imp-carte { height: 92mm; border: 1px solid var(--filet); }
+  .imp-carte .leaflet-control-container .leaflet-top { display: none; }
+  .legende-carte { font-size: 7.5pt; margin: 1.5mm 0 0; }
+
+  .imp-bloc-tableau { break-before: page; }
+  .imp-bloc-tableau table { font-size: 7.2pt; border-top: 1.5px solid var(--encre); }
+  .imp-bloc-tableau th { position: static; background: none; min-width: 0; font-size: 7.2pt; }
+  .imp-bloc-tableau th, .imp-bloc-tableau td { padding: .9mm 2mm .9mm 0; }
+  .imp-bloc-tableau td:first-child { max-width: 95mm; white-space: normal; }
+  .imp-bloc-tableau td:nth-child(2) { max-width: 52mm; white-space: normal; }
+  .imp-bloc-tableau thead { display: table-header-group; }
+  .imp-bloc-tableau tr { break-inside: avoid; }
+
+  .imp-renvoi { font-size: 7.5pt; color: var(--gris); margin-top: 3mm; }
+  .imp-methode ul { columns: 2; column-gap: 12mm; font-size: 9pt; padding-left: 4mm; }
+  .imp-methode li { margin-bottom: 2mm; break-inside: avoid; }
+}
