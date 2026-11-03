@@ -46,7 +46,7 @@ export function ouiNon(v) {
 }
 
 /** Codes utilisés par une expression de source (« G146+G149+G152 », « H437|H441 »). */
-export const codesDe = (expr) => (expr ? expr.split(/[+|]/).map((c) => c.trim()).filter(Boolean) : []);
+export const codesDe = (expr) => (expr ? expr.split(/[+|>]/).map((c) => c.trim()).filter((c) => c && !/^\d+$/.test(c)) : []);
 
 /** Expression applicable à une année donnée, ou null si non collecté. */
 export function sourcePour(indicateur, annee) {
@@ -59,6 +59,12 @@ export function sourcePour(indicateur, annee) {
 /** Valeur d'une expression pour une ligne de l'enquête. */
 export function evaluer(expr, agregation, ligne) {
   const codes = codesDe(expr);
+  // « C106>0 » : Oui si la valeur est strictement positive.
+  const seuil = /^([A-K]\d{3})>(\d+)$/.exec(expr ?? '');
+  if (agregation === 'oui' && seuil) {
+    const v = nombre(ligne[seuil[1]]);
+    return v === null ? null : v > Number(seuil[2]) ? 1 : 0;
+  }
   if (agregation === 'oui') {
     const vals = codes.map((c) => ouiNon(ligne[c])).filter((v) => v !== null);
     if (!vals.length) return null;

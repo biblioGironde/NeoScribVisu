@@ -57,6 +57,26 @@
           <p class="perimetre"></p>
           <p class="typologie-commune" hidden></p>
         </header>
+        <section class="bloc-cartographies" aria-label="Cartographies">
+          <form class="carto-controles" onsubmit="return false">
+            <label>Série
+              <select name="serie"></select>
+            </label>
+            <label class="carto-choix">Carte
+              <select name="carte"></select>
+            </label>
+            <label class="carto-case-noms"><input type="checkbox" name="noms" checked> Noms des intercommunalités</label>
+            <button type="button" class="carto-exporter principal-action">Exporter les cartes en PDF</button>
+          </form>
+          <h2 class="carto-titre"></h2>
+          <div class="carto-corps">
+            <div class="carto-carte"></div>
+            <aside class="carto-cote">
+              <div class="carto-legende-zone"></div>
+              <p class="carto-note"></p>
+            </aside>
+          </div>
+        </section>
         <section class="chiffres" aria-label="Chiffres clés"></section>
         <section class="bloc bloc-carte" hidden>
           <h2>Carte des lieux de lecture</h2>
@@ -89,6 +109,24 @@
   </div>
   <div id="impression" aria-hidden="true"></div>
   <style id="style-impression"></style>
+
+  <dialog id="dialogue-cartes" aria-labelledby="titre-cartes">
+    <form method="dialog">
+      <h2 id="titre-cartes">Exporter les cartes en PDF</h2>
+      <p class="export-intro">Une carte par page, au format A4 portrait, avec l'année et le cadrage en cours.</p>
+      <div class="export-raccourcis">
+        <button type="button" class="export-toutes">Tout cocher</button>
+        <button type="button" class="export-aucune">Tout décocher</button>
+      </div>
+      <div class="cartes-liste export-colonnes-3"></div>
+      <p class="export-erreur" role="alert" hidden></p>
+      <p class="export-aide">La fenêtre d'impression va s'ouvrir : choisissez la destination « Enregistrer au format PDF ».</p>
+      <div class="export-actions">
+        <button type="button" class="export-annuler">Annuler</button>
+        <button type="submit" class="principal-action">Créer le PDF</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="dialogue-export" aria-labelledby="titre-export">
     <form method="dialog">

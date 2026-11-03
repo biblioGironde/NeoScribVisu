@@ -8,13 +8,16 @@ const pct = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, signDispl
 const etat = { page: 'general', annee: null, epci: '', commune: '', typologie: '', reseau: '', tri: null, recherche: '' };
 let meta;
 const donnees = {}; // année → établissements
+const populationEpci = {}; // année → { code EPCI: population totale }
 let carte; // carte de l'écran { carte, fond, couche }
 
 // ------------------------------------------------------------------ chargement
 async function charger() {
   meta = await (await fetch('data/meta.json')).json();
   await Promise.all(meta.annees.map(async (a) => {
-    donnees[a] = (await (await fetch(`data/${a}.json`)).json()).etablissements;
+    const j = await (await fetch(`data/${a}.json`)).json();
+    donnees[a] = j.etablissements;
+    populationEpci[a] = j.population_epci ?? {};
   }));
   lireAdresse();
   etat.annee ??= Math.max(...meta.annees);
@@ -26,6 +29,7 @@ async function charger() {
 function lireAdresse() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (p.has('page')) etat.page = p.get('page');
+  if (p.has('carte')) etat.carte = p.get('carte');
   // Un filtre absent de l'adresse est un filtre vide (sinon un lien garderait le filtre précédent).
   for (const k of ['epci', 'commune', 'typologie', 'reseau']) etat[k] = p.get(k) ?? '';
   if (p.has('annee') && meta.annees.includes(Number(p.get('annee')))) etat.annee = Number(p.get('annee'));
@@ -34,6 +38,7 @@ function lireAdresse() {
 function ecrireAdresse() {
   const p = new URLSearchParams();
   for (const k of ['page', 'annee', 'epci', 'commune', 'typologie', 'reseau']) if (etat[k] !== '' && etat[k] != null) p.set(k, etat[k]);
+  if (pageCourante()?.type === 'cartes' && etat.carte) p.set('carte', etat.carte);
   history.replaceState(null, '', `#${p}`);
 }
 
@@ -190,6 +195,7 @@ function preparerInterface() {
   $('.bloc-tableau input').addEventListener('input', (ev) => { etat.recherche = ev.target.value; afficherTableau(); });
   $('.exporter').addEventListener('click', exporterCsv);
   preparerExport();
+  preparerCartographies();
 }
 
 function basculerMenu(ouvert) {
@@ -230,6 +236,13 @@ function afficher() {
   typo.innerHTML = htmlTypologieCommune(page, lignes);
   typo.hidden = !typo.innerHTML;
   afficherAvertissement();
+  const modeCartes = page.type === 'cartes';
+  document.body.classList.toggle('mode-cartes', modeCartes);
+  if (modeCartes) {
+    afficherCartographies();
+    afficherASavoir(page);
+    return;
+  }
   afficherChiffres(page, lignes);
   afficherCarte(page, lignes);
   afficherRepartition(page, lignes);
@@ -650,7 +663,7 @@ function exporterCsv() {
 }
 
 function afficherASavoir(page) {
-  $('.a-savoir ul').innerHTML = notesPour([page]).map((n) => `<li>${echapper(n)}</li>`).join('');
+  $('.a-savoir ul').innerHTML = (page.type === 'cartes' ? notesCartes() : notesPour([page])).map((n) => `<li>${echapper(n)}</li>`).join('');
 }
 
 // ------------------------------------------------------------------ export PDF (A4 paysage, via l'impression du navigateur)
@@ -677,7 +690,7 @@ function ouvrirExport() {
   const dlg = $('#dialogue-export');
   const memo = choixMemorises();
   const coche = (groupe, id, defaut) => (memo[groupe]?.includes(id) ?? defaut) ? 'checked' : '';
-  $('.export-pages', dlg).innerHTML = meta.pages.map((p) => `<label><input type="checkbox" name="page" value="${p.id}" ${p.id === etat.page ? 'checked' : ''}> ${echapper(p.titre)}</label>`).join('');
+  $('.export-pages', dlg).innerHTML = meta.pages.filter((p) => p.type !== 'cartes').map((p) => `<label><input type="checkbox" name="page" value="${p.id}" ${p.id === etat.page ? 'checked' : ''}> ${echapper(p.titre)}</label>`).join('');
   const nbLignes = selection(etat.annee).length;
   $('.export-elements', dlg).innerHTML = ELEMENTS_EXPORT.map((e) => `<label><input type="checkbox" name="element" value="${e.id}" ${coche('elements', e.id, e.defaut)}> ${echapper(e.libelle)}${e.id === 'tableau' ? ` <span class="aide">${nf().format(nbLignes)} lignes par page cochée, soit plusieurs feuilles</span>` : ''}</label>`).join('');
   $('.export-complements', dlg).innerHTML = COMPLEMENTS_EXPORT.map((e) => `<label><input type="checkbox" name="complement" value="${e.id}" ${coche('complements', e.id, e.defaut)}> ${echapper(e.libelle)}</label>`).join('');
@@ -693,7 +706,7 @@ function lireChoix(form) {
 
 async function genererPdf(choix) {
   const lignes = selection(etat.annee);
-  const pages = meta.pages.filter((p) => choix.pages.includes(p.id));
+  const pages = meta.pages.filter((p) => p.type !== 'cartes' && choix.pages.includes(p.id));
   const avec = (id) => choix.elements.includes(id);
   const perimetre = textePerimetre(lignes);
   const provisoire = texteProvisoire();
@@ -789,6 +802,322 @@ function preparerExport() {
     try {
       await genererPdf(choix);
       dlg.close();
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = 'Créer le PDF';
+    }
+  });
+}
+
+// ------------------------------------------------------------------ onglet Cartographies
+// Cartes thématiques en SVG (pas de fond de plan) : nettes à l'écran comme à l'impression.
+const geo = { communes: null, epci: null, projection: null };
+let promesseGeo;
+
+function chargerGeo() {
+  promesseGeo ??= Promise.all([
+    chargerCommunes(),
+    fetch('data/epci-33.geojson').then((r) => { if (!r.ok) throw new Error(`contours des intercommunalités introuvables (${r.status})`); return r.json(); }),
+  ]).then(([communes, epci]) => {
+    geo.communes = communes;
+    geo.epci = epci;
+    geo.projection = preparerProjection(communes, epci);
+  }).catch((err) => { promesseGeo = null; throw err; });
+  return promesseGeo;
+}
+
+/** Projection simple (équirectangulaire corrigée de la latitude) et tracés SVG précalculés. */
+function preparerProjection(communes, epci) {
+  let lonMin = Infinity, lonMax = -Infinity, latMin = Infinity, latMax = -Infinity;
+  const polygones = (g) => (g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []);
+  for (const f of communes.features) for (const poly of polygones(f.geometry)) for (const [lon, lat] of poly[0]) {
+    lonMin = Math.min(lonMin, lon); lonMax = Math.max(lonMax, lon); latMin = Math.min(latMin, lat); latMax = Math.max(latMax, lat);
+  }
+  const kx = Math.cos(((latMin + latMax) / 2) * Math.PI / 180);
+  const largeur = 1000;
+  const echelle = largeur / ((lonMax - lonMin) * kx);
+  const hauteur = (latMax - latMin) * echelle;
+  const px = ([lon, lat]) => [(lon - lonMin) * kx * echelle, (latMax - lat) * echelle];
+  const trace = (g) => {
+    let d = '';
+    const boite = [Infinity, Infinity, -Infinity, -Infinity];
+    let meilleur = { aire: 0, centre: null };
+    for (const poly of polygones(g)) {
+      poly.forEach((anneau, i) => {
+        const pts = anneau.map(px);
+        d += `M${pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L')}Z`;
+        if (i) return;
+        let aire = 0, cx = 0, cy = 0;
+        for (let k = 0; k < pts.length - 1; k++) {
+          const [x0, y0] = pts[k], [x1, y1] = pts[k + 1];
+          const a = x0 * y1 - x1 * y0;
+          aire += a; cx += (x0 + x1) * a; cy += (y0 + y1) * a;
+          boite[0] = Math.min(boite[0], x0); boite[1] = Math.min(boite[1], y0); boite[2] = Math.max(boite[2], x0); boite[3] = Math.max(boite[3], y0);
+        }
+        if (Math.abs(aire) > meilleur.aire) meilleur = { aire: Math.abs(aire), centre: [cx / (3 * aire), cy / (3 * aire)] };
+      });
+    }
+    return { d, boite, centre: meilleur.centre };
+  };
+  const tracesCommunes = communes.features.map((f) => ({ ...f.properties, ...trace(f.geometry) }));
+  const tracesEpci = epci.features.map((f) => ({ ...f.properties, ...trace(f.geometry) }));
+  return { largeur, hauteur, communes: tracesCommunes, epci: tracesEpci };
+}
+
+const seriesCartes = () => meta.cartographies?.series ?? [];
+const listeCartes = () => meta.cartographies?.cartes ?? [];
+const carteCourante = () => listeCartes().find((c) => c.id === etat.carte) ?? listeCartes()[0];
+
+/** Lignes prises en compte : année et filtres typologie / réseau (l'intercommunalité sert au zoom). */
+function lignesCartes(annee) {
+  return (donnees[annee] ?? []).filter((e) =>
+    (!etat.typologie || e.typologie === etat.typologie) && (!etat.reseau || String(e.reseau_bg) === etat.reseau));
+}
+
+/** Valeur d'une carte pour une zone (commune ou intercommunalité). null = non communiqué. */
+function mesurerZone(carte, lignes, zone, annee) {
+  const c = carte.calcul;
+  const pop = carte.serie === 'epci_totale' ? (populationEpci[annee]?.[zone] ?? population(lignes)) : population(lignes);
+  const v = (id) => agreger(id, lignes, annee)?.valeur ?? null;
+  switch (c.type) {
+    case 'oui': {
+      const r = agreger(c.indicateur, lignes, annee);
+      return r ? (r.valeur > 0 ? 'Oui' : 'Non') : null;
+    }
+    case 'valeur': return v(c.indicateur);
+    case 'ratio': {
+      const n = v(c.numerateur);
+      return n == null || !pop ? null : (n / pop) * (c.facteur ?? 1);
+    }
+    case 'habitants_par': {
+      const n = v(c.indicateur);
+      if (n == null || !pop) return null;
+      return n === 0 ? Infinity : pop / n;
+    }
+    case 'part': {
+      const n = v(c.numerateur);
+      const d = c.denominateur.map(v).reduce((a, b) => a + (b ?? 0), 0);
+      return n == null || !d ? null : (n / d) * (c.facteur ?? 1);
+    }
+  }
+  return null;
+}
+
+function valeursCarte(carte, annee) {
+  const parZone = new Map();
+  for (const e of lignesCartes(annee)) {
+    const zone = carte.serie === 'communes' ? e.insee : e.epci;
+    if (!zone) continue;
+    if (!parZone.has(zone)) parZone.set(zone, []);
+    parZone.get(zone).push(e);
+  }
+  const valeurs = new Map();
+  for (const [zone, lignes] of parZone) valeurs.set(zone, mesurerZone(carte, lignes, zone, annee));
+  return valeurs;
+}
+
+/** Classe d'une valeur : { libelle, couleur } ou null. */
+function classeDe(carte, valeur) {
+  if (valeur == null) return null;
+  if (carte.categories) return carte.categories[valeur] ?? null;
+  return carte.classes.find((c) => c.max == null || valeur < c.max) ?? carte.classes.at(-1);
+}
+
+function texteValeur(carte, valeur) {
+  if (valeur == null) return 'non communiqué';
+  if (typeof valeur === 'string') return valeur;
+  if (valeur === Infinity) return 'aucun ETP salarié';
+  const c = carte.calcul;
+  if (c.type === 'habitants_par') return `1 ETP pour ${nf().format(Math.round(valeur))} habitants`;
+  if (c.type === 'part' || (c.type === 'ratio' && c.facteur === 100 && carte.legende.includes('%'))) return `${nf(1).format(valeur)} %`;
+  if (/€/.test(carte.classes?.[0]?.libelle ?? '')) return `${nf(2).format(valeur)} €`;
+  return nf(valeur < 10 ? 1 : 0).format(valeur) + (/m²/.test(carte.legende) ? ' m²' : /heures/i.test(carte.legende) ? ' h' : '');
+}
+
+const disponibleCarte = (carte, annee) => {
+  const c = carte.calcul;
+  const ids = [c.indicateur, c.numerateur, ...(c.denominateur ?? [])].filter(Boolean);
+  return ids.every((id) => disponible(id, annee));
+};
+
+/** Carte SVG complète + légende. Renvoie { svg, legende, stats }. */
+function dessinerCartographie(carte, annee, options = {}) {
+  const P = geo.projection;
+  const valeurs = valeursCarte(carte, annee);
+  const couleurs = meta.cartographies.couleurs;
+  const avecBibliotheque = new Set(lignesCartes(annee).map((e) => e.insee));
+  const comptes = new Map();
+  let nc = 0, sans = 0;
+  const communes = P.communes.map((c) => {
+    let fill = couleurs.sans_bibliotheque, info;
+    const zone = carte.serie === 'communes' ? c.code : c.codeEpci;
+    const estSans = carte.serie !== 'epci_totale' && !avecBibliotheque.has(c.code);
+    if (estSans) { info = 'pas de lieu de lecture'; if (carte.serie === 'communes') sans++; }
+    else if (!valeurs.has(zone)) { info = carte.serie === 'epci_totale' ? 'aucun lieu de lecture dans l\'intercommunalité' : 'pas de lieu de lecture'; fill = carte.serie === 'epci_totale' ? couleurs.nc : couleurs.sans_bibliotheque; }
+    else {
+      const v = valeurs.get(zone);
+      const cl = classeDe(carte, v);
+      fill = cl ? cl.couleur : couleurs.nc;
+      info = texteValeur(carte, v);
+      if (carte.serie === 'communes') { if (cl) comptes.set(cl.libelle, (comptes.get(cl.libelle) ?? 0) + 1); else nc++; }
+    }
+    const choisie = c.code === etat.commune;
+    const hors = etat.epci && c.codeEpci !== etat.epci;
+    return `<path d="${c.d}" fill="${fill}" class="carto-commune${choisie ? ' choisie' : ''}${hors ? ' hors' : ''}" data-commune="${c.code}" data-epci="${c.codeEpci}"><title>${echapper(c.nom)} : ${echapper(info)}</title></path>`;
+  }).join('');
+  if (carte.serie !== 'communes') {
+    for (const [zone, v] of valeurs) {
+      const cl = classeDe(carte, v);
+      if (cl) comptes.set(cl.libelle, (comptes.get(cl.libelle) ?? 0) + 1); else nc++;
+    }
+  }
+  const epci = P.epci.map((e) => `<path d="${e.d}" class="carto-epci"><title>${echapper(libelleEpci(e.code))}${valeurs.has(e.code) && carte.serie !== 'communes' ? ` : ${echapper(texteValeur(carte, valeurs.get(e.code)))}` : ''}</title></path>`).join('');
+
+  // Cadrage : toute la Gironde, ou l'intercommunalité filtrée
+  let [x0, y0, x1, y1] = [0, 0, P.largeur, P.hauteur];
+  const cible = etat.epci && P.epci.find((e) => e.code === etat.epci);
+  if (cible) [x0, y0, x1, y1] = cible.boite;
+  const marge = Math.max(x1 - x0, y1 - y0) * 0.04;
+  const vb = [x0 - marge, y0 - marge, x1 - x0 + 2 * marge, y1 - y0 + 2 * marge];
+  const taille = (vb[2] / P.largeur) * (options.impression ? 11 : 10);
+  const noms = options.noms === false ? '' : P.epci.filter((e) => e.centre && (!cible || e.code === cible.code)).map((e) =>
+    `<text x="${e.centre[0].toFixed(1)}" y="${e.centre[1].toFixed(1)}" font-size="${taille.toFixed(2)}" class="carto-nom">${echapper(libelleEpci(e.code))}</text>`).join('');
+
+  const svg = `<svg viewBox="${vb.map((n) => n.toFixed(1)).join(' ')}" class="carto-svg" role="img" aria-label="${echapper(carte.titre)}, données ${annee}">
+      <g class="carto-communes">${communes}</g><g class="carto-limites">${epci}</g><g class="carto-noms">${noms}</g></svg>`;
+
+  const lignesLegende = (carte.categories ? Object.values(carte.categories) : carte.classes).map((c) =>
+    `<li><span class="carto-case" style="background:${c.couleur}"></span>${echapper(c.libelle)}<span class="carto-nb">${nf().format(comptes.get(c.libelle) ?? 0)}</span></li>`);
+  lignesLegende.push(`<li><span class="carto-case" style="background:${couleurs.nc}"></span>Non communiqué<span class="carto-nb">${nf().format(nc)}</span></li>`);
+  if (carte.serie !== 'epci_totale') lignesLegende.push(`<li><span class="carto-case carto-case-vide"></span>Pas de lieu de lecture${carte.serie === 'communes' ? `<span class="carto-nb">${nf().format(sans)}</span>` : ''}</li>`);
+  const unite = carte.serie === 'communes' ? 'communes' : 'intercommunalités';
+  const legende = `<p class="carto-legende-titre">${echapper(carte.legende)}</p><ul class="carto-legende">${lignesLegende.join('')}</ul>
+    <p class="carto-unite">Nombre de ${unite} par classe.</p>`;
+  return { svg, legende };
+}
+
+function noteSerie(carte) {
+  return seriesCartes().find((s) => s.id === carte.serie)?.note ?? '';
+}
+
+function afficherCartographies() {
+  const bloc = $('.bloc-cartographies');
+  const carte = carteCourante();
+  if (!carte) { $('.carto-zone', bloc).innerHTML = '<p>Aucune carte n\'est définie dans la configuration.</p>'; return; }
+  etat.carte = carte.id;
+  const f = $('.carto-controles', bloc);
+  f.serie.value = carte.serie;
+  f.carte.innerHTML = listeCartes().filter((c) => c.serie === carte.serie).map((c) => `<option value="${c.id}">${echapper(c.titre)}</option>`).join('');
+  f.carte.value = carte.id;
+  ecrireAdresse();
+  $('.carto-titre', bloc).textContent = `${carte.titre} (données ${etat.annee})`;
+  $('.carto-note', bloc).textContent = noteSerie(carte);
+  if (!disponibleCarte(carte, etat.annee)) {
+    $('.carto-carte', bloc).innerHTML = `<p class="carto-message">Cette carte ne peut pas être produite pour ${etat.annee} : une des données nécessaires n'est pas collectée cette année-là.</p>`;
+    $('.carto-legende-zone', bloc).innerHTML = '';
+    return;
+  }
+  $('.carto-carte', bloc).innerHTML = '<p class="carto-message">Chargement des contours…</p>';
+  chargerGeo().then(() => {
+    if (pageCourante().type !== 'cartes' || carteCourante()?.id !== carte.id) return;
+    const r = dessinerCartographie(carte, etat.annee, { noms: f.noms.checked });
+    $('.carto-carte', bloc).innerHTML = r.svg;
+    $('.carto-legende-zone', bloc).innerHTML = r.legende;
+  }).catch((err) => {
+    $('.carto-carte', bloc).innerHTML = `<p class="carto-message">Les contours n'ont pas pu être chargés (${echapper(err.message)}).</p>`;
+  });
+}
+
+function notesCartes() {
+  return [
+    'Communes : chaque commune est colorée selon la valeur calculée pour l\'ensemble de ses lieux de lecture, rapportée à sa population. « Oui » signifie qu\'au moins un lieu de la commune répond oui.',
+    'Intercommunalités, population desservie (série A) : valeurs de l\'intercommunalité rapportées à la population des seules communes qui ont un lieu de lecture ; les autres communes restent en blanc.',
+    'Intercommunalités, population totale (série B) : valeurs rapportées à la population totale de l\'intercommunalité (annuaire de l\'enquête).',
+    'Non communiqué : la commune ou l\'intercommunalité a au moins un lieu de lecture, mais la donnée n\'a pas été renseignée.',
+    'Fonds propre : livres, documents sonores et vidéo hors dépôt de biblio.gironde. Fonds biblio.gironde : livres, documents sonores et vidéo en dépôt au 31 décembre.',
+    'Contours des communes et des intercommunalités : ADEME, référentiel SIG.',
+    'Un filtre d\'intercommunalité recadre la carte sur ce territoire ; les filtres de typologie et de réseau limitent les lieux de lecture pris en compte.',
+  ];
+}
+
+// ---- export des cartes : une carte par page, A4 portrait
+function ouvrirExportCartes() {
+  const dlg = $('#dialogue-cartes');
+  $('.cartes-liste', dlg).innerHTML = seriesCartes().map((s) => `<fieldset><legend>${echapper(s.libelle)}</legend><div class="export-liste">${
+    listeCartes().filter((c) => c.serie === s.id).map((c) => `<label><input type="checkbox" name="carte" value="${c.id}" ${c.id === etat.carte ? 'checked' : ''}${disponibleCarte(c, etat.annee) ? '' : ' disabled'}> ${echapper(c.titre)}${disponibleCarte(c, etat.annee) ? '' : ' <span class="aide">non disponible pour cette année</span>'}</label>`).join('')}</div></fieldset>`).join('');
+  $('.export-erreur', dlg).hidden = true;
+  dlg.showModal();
+}
+
+async function genererPdfCartes(ids, noms) {
+  await chargerGeo();
+  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const territoire = etat.epci ? libelleEpci(etat.epci) : '';
+  const pages = listeCartes().filter((c) => ids.includes(c.id)).map((carte) => {
+    const r = dessinerCartographie(carte, etat.annee, { noms, impression: true });
+    return `<section class="imp-poster">
+      <h1>${echapper(carte.titre)}<br><span>(données ${etat.annee}${territoire ? `, ${echapper(territoire)}` : ''})</span></h1>
+      <div class="imp-poster-carte">${r.svg}</div>
+      <div class="imp-poster-bas"><div class="imp-poster-legende">${r.legende}</div>
+        <div class="imp-poster-mentions"><p>${echapper(noteSerie(carte))}</p><p>Réseau biblio.gironde. Source : enquête annuelle du Service du livre et de la lecture, ministère de la Culture ; contours ADEME. Édité le ${date} avec NeoScribVisu.</p></div></div>
+    </section>`;
+  });
+  const zone = $('#impression');
+  zone.innerHTML = pages.join('');
+  $('#style-impression').textContent = '@page carte { size: A4 portrait; margin: 12mm; }';
+  const nettoyer = () => { zone.innerHTML = ''; removeEventListener('afterprint', nettoyer); };
+  addEventListener('afterprint', nettoyer);
+  const titre = document.title;
+  document.title = `Cartographies ${etat.annee}${territoire ? ` – ${territoire}` : ''}`;
+  print();
+  document.title = titre;
+}
+
+function preparerCartographies() {
+  const bloc = $('.bloc-cartographies');
+  const f = $('.carto-controles', bloc);
+  f.serie.innerHTML = seriesCartes().map((s) => `<option value="${s.id}">${echapper(s.libelle)}</option>`).join('');
+  f.addEventListener('change', (ev) => {
+    if (ev.target.name === 'serie') {
+      // Même thème dans l'autre série si possible (ex. emprunteurs), sinon la première carte de la série.
+      const theme = carteCourante()?.id.replace(/^[a-z]-/, '');
+      const cartes = listeCartes().filter((c) => c.serie === ev.target.value);
+      etat.carte = (cartes.find((c) => c.id.replace(/^[a-z]-/, '') === theme) ?? cartes[0])?.id;
+    }
+    if (ev.target.name === 'carte') etat.carte = ev.target.value;
+    afficherCartographies();
+  });
+  // Clic : une commune ouvre sa fiche (cartes communales) ; sinon recadrage sur l'intercommunalité.
+  $('.carto-carte', bloc).addEventListener('click', (ev) => {
+    const p = ev.target.closest('[data-commune]');
+    if (!p) return;
+    if (carteCourante().serie === 'communes') {
+      if (!donnees[etat.annee].some((e) => e.insee === p.dataset.commune)) return;
+      Object.assign(etat, { page: 'general', epci: '', commune: p.dataset.commune });
+    } else {
+      etat.epci = etat.epci === p.dataset.epci ? '' : p.dataset.epci;
+    }
+    afficher();
+  });
+  $('.carto-exporter', bloc).addEventListener('click', ouvrirExportCartes);
+  const dlg = $('#dialogue-cartes');
+  $('.export-toutes', dlg).addEventListener('click', () => dlg.querySelectorAll('input[name="carte"]:not(:disabled)').forEach((i) => { i.checked = true; }));
+  $('.export-aucune', dlg).addEventListener('click', () => dlg.querySelectorAll('input[name="carte"]').forEach((i) => { i.checked = false; }));
+  $('.export-annuler', dlg).addEventListener('click', () => dlg.close());
+  $('form', dlg).addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const ids = [...dlg.querySelectorAll('input[name="carte"]:checked')].map((i) => i.value);
+    const erreur = $('.export-erreur', dlg);
+    if (!ids.length) { erreur.textContent = 'Cochez au moins une carte.'; erreur.hidden = false; return; }
+    const bouton = $('button[type="submit"]', dlg);
+    bouton.disabled = true;
+    bouton.textContent = 'Préparation…';
+    try {
+      await genererPdfCartes(ids, $('.carto-controles', bloc).noms.checked);
+      dlg.close();
+    } catch (err) {
+      erreur.textContent = `Les cartes n'ont pas pu être préparées (${err.message}).`;
+      erreur.hidden = false;
     } finally {
       bouton.disabled = false;
       bouton.textContent = 'Créer le PDF';

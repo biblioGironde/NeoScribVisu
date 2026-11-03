@@ -157,7 +157,14 @@ for (const annee of annees) {
     herites++;
   }
 
-  fs.writeFileSync(path.join(DOSSIER_SORTIE, `${annee}.json`), JSON.stringify({ annee: Number(annee), etablissements }));
+  // Population totale de chaque intercommunalité (annuaire) : cartes intercommunales « population totale ».
+  const population_epci = {};
+  for (const l of annuaire.values()) {
+    const p = nombre(l['Population EPCI']);
+    if (l['Code EPCI'] && p) population_epci[l['Code EPCI']] = p;
+  }
+
+  fs.writeFileSync(path.join(DOSSIER_SORTIE, `${annee}.json`), JSON.stringify({ annee: Number(annee), etablissements, population_epci }));
 
   // ------------------------------------------------------------ rapport de l'année
   const nbLieux = etablissements.filter((e) => e.type === 'lieu').length;
@@ -217,6 +224,7 @@ const meta = {
     disponibilite: disponibilite[id] ?? {},
   }])),
   pages: config.pages,
+  cartographies: config.cartographies,
 };
 fs.writeFileSync(path.join(DOSSIER_SORTIE, 'meta.json'), JSON.stringify(meta, null, 1));
 fs.writeFileSync(path.join(RACINE, 'rapport-import.md'), rapport.join('\n'));

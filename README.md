@@ -22,7 +22,18 @@ npm start          # http://localhost:8080
 
 La carte de la page Général propose deux fonds, au choix en haut à droite : le plan OpenStreetMap et le découpage communal. Le choix est mémorisé dans le navigateur et repris dans l'export PDF. En découpage communal, les communes qui ont au moins un lieu de lecture dans la sélection sont teintées ; un clic sur l'une d'elles ouvre sa fiche.
 
-Les contours viennent du référentiel SIG « Contours des communes » de l'ADEME (data-interne.ademe.fr, mis à jour chaque année). Ils sont stockés dans `public/data/communes-33.geojson` ; pour les rafraîchir : `npm run contours`.
+Les contours viennent du référentiel SIG « Contours des communes » de l'ADEME (data-interne.ademe.fr, mis à jour chaque année). Ils sont stockés dans `public/data/communes-33.geojson` et `public/data/epci-33.geojson` ; pour les rafraîchir, après `npm run import` : `npm run contours`.
+
+## Cartographies
+
+L'onglet « Cartographies » reprend les cartes thématiques produites jusqu'ici à la main (série 2024) :
+
+- **par commune** : gratuité, accès public à internet, heures d'ouverture, accessibilité, emprunteurs actifs, surface pour 100 habitants ;
+- **par intercommunalité, population desservie** (série A, population des communes qui ont un lieu de lecture) et **population totale** (série B) : emprunteurs, surface, bénévoles, ETP salariés, budget d'acquisition, fonds propre, part du fonds biblio.gironde, budget d'action culturelle.
+
+Les cartes sont dessinées en SVG à partir des contours ADEME des communes et des intercommunalités (`npm run contours`). Le filtre d'intercommunalité recadre la carte ; un clic sur une commune ouvre sa fiche. Le bouton « Exporter les cartes en PDF » produit une carte par page en A4 portrait, au choix dans une liste.
+
+Les cartes, leurs classes et leurs couleurs sont décrites dans `config/indicateurs.json`, rubrique `cartographies`.
 
 ## Export PDF
 

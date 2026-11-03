@@ -181,6 +181,45 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
   .export-pages { columns: 1; }
 }
 
+
+/* ---- Onglet Cartographies */
+.bloc-cartographies { display: none; }
+.mode-cartes .bloc-cartographies { display: block; margin-top: 1.5rem; }
+.mode-cartes .chiffres,
+.mode-cartes .bloc:not(.a-savoir) { display: none !important; }
+.carto-controles { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; padding-bottom: 1rem; border-bottom: 2px solid var(--encre); }
+.carto-controles label { display: flex; flex-direction: column; font-size: .78rem; color: var(--gris); gap: .2rem; }
+.carto-controles select { font: inherit; font-size: .9rem; color: var(--encre); background: var(--surface); border: 1px solid var(--filet); border-radius: 4px; padding: .35rem .5rem; }
+.carto-choix select { min-width: 22rem; max-width: 100%; }
+.carto-controles .carto-case-noms { flex-direction: row; align-items: center; gap: .4rem; font-size: .88rem; color: var(--encre); padding-bottom: .4rem; }
+.carto-exporter { margin-left: auto; }
+.carto-titre { font: 600 1.45rem/1.2 var(--serif); margin: 1.25rem 0 1rem; }
+.carto-corps { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 2rem; align-items: start; }
+.carto-carte { background: #fff; border: 1px solid var(--filet); border-radius: 4px; padding: .5rem; min-height: 20rem; }
+.carto-svg { display: block; width: 100%; height: auto; max-height: 78vh; }
+.carto-commune { stroke: #6b6b6b; stroke-width: .35; vector-effect: non-scaling-stroke; cursor: pointer; }
+.carto-commune:hover { stroke: #000; stroke-width: 1.5; }
+.carto-commune.hors { opacity: .3; }
+body.mode-cartes .ouvrir-export { display: none; }
+.carto-commune.choisie { stroke: #8c2f4b; stroke-width: 2.5; }
+.carto-epci { fill: none; stroke: #1e2a33; stroke-width: 1.2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.carto-nom { font-family: var(--sans); font-weight: 600; fill: #1e2a33; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: #fff; stroke-width: .3em; stroke-linejoin: round; pointer-events: none; }
+.carto-message { color: var(--gris); padding: 2rem 1rem; }
+.carto-legende-titre { font-weight: 600; margin: 0 0 .6rem; }
+.carto-legende { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.carto-legende li { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: .5rem; font-size: .9rem; }
+.carto-case { width: 1.6rem; height: 1rem; border: 1px solid #6b6b6b; display: inline-block; }
+.carto-case-vide { background: #fff; }
+.carto-nb { color: var(--gris); font-size: .82rem; }
+.carto-unite, .carto-note { color: var(--gris); font-size: .82rem; margin: .7rem 0 0; }
+.export-colonnes-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 1.5rem; }
+@media (max-width: 860px) {
+  .carto-corps { grid-template-columns: 1fr; }
+  .carto-choix select { min-width: 0; }
+  .carto-exporter { margin-left: 0; }
+  .export-colonnes-3 { grid-template-columns: 1fr; }
+}
+
 /* ---- Zone d'impression : hors écran à l'écran (pour que les cartes aient une taille), seule visible à l'impression */
 #impression { position: absolute; left: -12000px; top: 0; width: 273mm; }
 #impression .imp-carte { height: 92mm; }
@@ -251,6 +290,23 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
   .imp-bloc-tableau thead { display: table-header-group; }
   .imp-bloc-tableau tr { break-inside: avoid; }
 
+
+  /* Cartes thématiques : une par page, A4 portrait */
+  .imp-poster { page: carte; break-before: page; display: flex; flex-direction: column; height: 271mm; }
+  #impression > .imp-poster:first-child { break-before: auto; }
+  .imp-poster h1 { font: 400 17pt/1.25 var(--sans); text-align: center; margin: 2mm 0 4mm; }
+  .imp-poster h1 span { font-size: 13pt; }
+  .imp-poster-carte { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  .imp-poster-carte .carto-svg { max-height: 100%; width: auto; max-width: 100%; height: 100%; }
+  .imp-poster .carto-commune { stroke-width: .3; }
+  .imp-poster .carto-epci { stroke-width: 1; }
+  .imp-poster-bas { display: grid; grid-template-columns: 75mm 1fr; gap: 8mm; align-items: end; margin-top: 3mm; }
+  .imp-poster .carto-legende-titre { font-size: 9pt; margin-bottom: 1.5mm; }
+  .imp-poster .carto-legende { gap: 1mm; }
+  .imp-poster .carto-legende li { font-size: 8.5pt; grid-template-columns: 7mm 1fr auto; gap: 2mm; }
+  .imp-poster .carto-case { width: 7mm; height: 3.6mm; }
+  .imp-poster .carto-unite { font-size: 7pt; margin-top: 1.5mm; }
+  .imp-poster-mentions p { font-size: 7.5pt; color: var(--gris); margin: 0 0 1.5mm; }
   .imp-renvoi { font-size: 7.5pt; color: var(--gris); margin-top: 3mm; }
   .imp-methode ul { columns: 2; column-gap: 12mm; font-size: 9pt; padding-left: 4mm; }
   .imp-methode li { margin-bottom: 2mm; break-inside: avoid; }

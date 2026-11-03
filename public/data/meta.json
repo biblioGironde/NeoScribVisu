@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-03T23:24:57.336Z",
+ "genere_le": "2026-11-03T23:39:25.320Z",
  "annees": [
   2024,
   2025
@@ -1608,6 +1608,53 @@
     "2024": true,
     "2025": true
    }
+  },
+  "internet_public": {
+   "libelle": "Accès public à internet dans la bibliothèque",
+   "agregation": "oui",
+   "source": {
+    "2024": "E529",
+    "*": "C106>0"
+   },
+   "note": "2024 : réponse à la question « accès internet dans la bibliothèque » ; à partir de 2025 : au moins un poste public relié à internet.",
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "etp_salaries": {
+   "libelle": "ETP salariés",
+   "agregation": "somme",
+   "source": {
+    "*": "G102"
+   },
+   "decimales": 1,
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "fonds_propre": {
+   "libelle": "Documents en fonds propre (livres, sonores, vidéo)",
+   "agregation": "somme",
+   "source": {
+    "*": "D128+D409+D411"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "fonds_bdp": {
+   "libelle": "Documents en dépôt de biblio.gironde",
+   "agregation": "somme",
+   "source": {
+    "*": "D143+D447+D448"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
   }
  },
  "pages": [
@@ -2033,6 +2080,759 @@
     "lycees",
     "superieur"
    ]
+  },
+  {
+   "id": "cartographies",
+   "titre": "Cartographies",
+   "type": "cartes",
+   "tuiles": []
   }
- ]
+ ],
+ "cartographies": {
+  "series": [
+   {
+    "id": "communes",
+    "libelle": "Par commune",
+    "note": "Valeurs calculées pour chaque commune, sur sa population. Communes en blanc : pas de lieu de lecture."
+   },
+   {
+    "id": "epci_desservie",
+    "libelle": "Par intercommunalité : population desservie",
+    "note": "Cartes intercommunales série A : basées sur la population des communes de l'intercommunalité ayant une bibliothèque (population desservie). Communes en blanc : pas de lieu de lecture."
+   },
+   {
+    "id": "epci_totale",
+    "libelle": "Par intercommunalité : population totale",
+    "note": "Cartes intercommunales série B : basées sur la population totale de l'intercommunalité (population à desservir)."
+   }
+  ],
+  "couleurs": {
+   "nc": "#b4b4b4",
+   "sans_bibliotheque": "#ffffff"
+  },
+  "cartes": [
+   {
+    "id": "c-gratuite",
+    "serie": "communes",
+    "titre": "Gratuité d'adhésion à la bibliothèque",
+    "legende": "Gratuité de la bibliothèque",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "gratuite"
+    },
+    "categories": {
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#c6efc6"
+     },
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#d9b8f0"
+     }
+    }
+   },
+   {
+    "id": "c-internet",
+    "serie": "communes",
+    "titre": "Point d'accès public à internet",
+    "legende": "Accès internet dans la bibliothèque",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "internet_public"
+    },
+    "categories": {
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#c8f0a0"
+     },
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#d0b8f0"
+     }
+    }
+   },
+   {
+    "id": "c-heures",
+    "serie": "communes",
+    "titre": "Nombre d'heures d'ouverture",
+    "legende": "Heures d'ouverture hebdomadaires",
+    "calcul": {
+     "type": "valeur",
+     "indicateur": "heures_hebdo"
+    },
+    "classes": [
+     {
+      "max": 4,
+      "libelle": "moins de 4 h",
+      "couleur": "#dcf5c0"
+     },
+     {
+      "max": 10,
+      "libelle": "de 4 h à 10 h",
+      "couleur": "#b5c42a"
+     },
+     {
+      "max": 15,
+      "libelle": "de 10 h à 15 h",
+      "couleur": "#43b649"
+     },
+     {
+      "max": 20,
+      "libelle": "de 15 h à 20 h",
+      "couleur": "#237a3f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 h",
+      "couleur": "#0b3a0b"
+     }
+    ]
+   },
+   {
+    "id": "c-accessibilite",
+    "serie": "communes",
+    "titre": "Accessibilité aux personnes à mobilité réduite",
+    "legende": "Bibliothèque accessible aux personnes à mobilité réduite",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "accessible"
+    },
+    "categories": {
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#f08a8a"
+     },
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#b8e886"
+     }
+    }
+   },
+   {
+    "id": "c-emprunteurs",
+    "serie": "communes",
+    "titre": "Emprunteurs actifs",
+    "legende": "% d'emprunteurs actifs (sur la population de la commune)",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 5,
+      "libelle": "moins de 5 %",
+      "couleur": "#e3f7f7"
+     },
+     {
+      "max": 10,
+      "libelle": "entre 5 et 10 %",
+      "couleur": "#5ff0f5"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#45e6c0"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#237a6a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#0b3a32"
+     }
+    ]
+   },
+   {
+    "id": "c-surface",
+    "serie": "communes",
+    "titre": "Surface en m² de la bibliothèque pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#c9dff2"
+     },
+     {
+      "max": 5,
+      "libelle": "entre 3 et 5 m²",
+      "couleur": "#4fc3f0"
+     },
+     {
+      "max": 7,
+      "libelle": "entre 5 et 7 m²",
+      "couleur": "#2f7fe0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#0c2a6a"
+     }
+    ]
+   },
+   {
+    "id": "a-emprunteurs",
+    "serie": "epci_desservie",
+    "titre": "% d'emprunteurs actifs",
+    "legende": "% d'emprunteurs",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#dde8fb"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#b9cdf5"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#3a7fef"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#0a3a8f"
+     }
+    ]
+   },
+   {
+    "id": "a-surface",
+    "serie": "epci_desservie",
+    "titre": "Surface en m² pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#eef9e8"
+     },
+     {
+      "max": 5,
+      "libelle": "de 3 à 5 m²",
+      "couleur": "#c8f5c0"
+     },
+     {
+      "max": 7,
+      "libelle": "de 5 à 7 m²",
+      "couleur": "#2fa02f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#0b4a3f"
+     }
+    ]
+   },
+   {
+    "id": "a-benevoles",
+    "serie": "epci_desservie",
+    "titre": "Bénévoles pour 1 000 habitants",
+    "legende": "Bénévoles pour 1 000 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "benevoles",
+     "facteur": 1000
+    },
+    "classes": [
+     {
+      "max": 2,
+      "libelle": "moins de 2 bénévoles",
+      "couleur": "#a8ecd8"
+     },
+     {
+      "max": 4,
+      "libelle": "de 2 à 4 bénévoles",
+      "couleur": "#2ecf9f"
+     },
+     {
+      "max": 7,
+      "libelle": "de 4 à 7 bénévoles",
+      "couleur": "#0f7a5a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 bénévoles",
+      "couleur": "#0a4a36"
+     }
+    ]
+   },
+   {
+    "id": "a-etp",
+    "serie": "epci_desservie",
+    "titre": "Équivalent temps plein salariés",
+    "legende": "Habitants pour 1 ETP salarié",
+    "calcul": {
+     "type": "habitants_par",
+     "indicateur": "etp_salaries"
+    },
+    "classes": [
+     {
+      "max": 2000,
+      "libelle": "1 ETP pour moins de 2 000 habitants",
+      "couleur": "#0b4a3f"
+     },
+     {
+      "max": 3500,
+      "libelle": "1 ETP pour 2 000 à 3 500 habitants",
+      "couleur": "#1f8f7a"
+     },
+     {
+      "max": 5000,
+      "libelle": "1 ETP pour 3 500 à 5 000 habitants",
+      "couleur": "#40e0c0"
+     },
+     {
+      "max": null,
+      "libelle": "1 ETP pour plus de 5 000 habitants",
+      "couleur": "#d8f8c0"
+     }
+    ]
+   },
+   {
+    "id": "a-acquisition",
+    "serie": "epci_desservie",
+    "titre": "Budget d'acquisition par habitant",
+    "legende": "Budget d'acquisition par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "acq_total",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 €",
+      "couleur": "#9ff0e0"
+     },
+     {
+      "max": 1.5,
+      "libelle": "de 1 € à 1,50 €",
+      "couleur": "#2fd8f0"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1,50 € à 2 €",
+      "couleur": "#10a0e0"
+     },
+     {
+      "max": 2.5,
+      "libelle": "de 2 € à 2,50 €",
+      "couleur": "#1030e0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 2,50 €",
+      "couleur": "#0a1f4a"
+     }
+    ]
+   },
+   {
+    "id": "a-fonds-propre",
+    "serie": "epci_desservie",
+    "titre": "Nombre de documents en fonds propre par habitant",
+    "legende": "Documents en fonds propre par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "fonds_propre",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 document",
+      "couleur": "#eefbe8"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1 à 2 documents",
+      "couleur": "#c0f5c0"
+     },
+     {
+      "max": 3,
+      "libelle": "de 2 à 3 documents",
+      "couleur": "#3aa83a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 3 documents",
+      "couleur": "#0b4a0b"
+     }
+    ]
+   },
+   {
+    "id": "a-fonds-bg",
+    "serie": "epci_desservie",
+    "titre": "Part du fonds biblio.gironde sur le fonds total",
+    "legende": "Part du fonds biblio.gironde",
+    "calcul": {
+     "type": "part",
+     "numerateur": "fonds_bdp",
+     "denominateur": [
+      "fonds_propre",
+      "fonds_bdp"
+     ],
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#b8d0f5"
+     },
+     {
+      "max": 20,
+      "libelle": "de 10 à 20 %",
+      "couleur": "#3a7fe0"
+     },
+     {
+      "max": 30,
+      "libelle": "de 20 à 30 %",
+      "couleur": "#0a3a8f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 30 %",
+      "couleur": "#061f50"
+     }
+    ]
+   },
+   {
+    "id": "a-action-culturelle",
+    "serie": "epci_desservie",
+    "titre": "Budget d'action culturelle par habitant",
+    "legende": "Budget d'action culturelle par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "dep_action_culturelle",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 0.2,
+      "libelle": "moins de 0,20 €",
+      "couleur": "#8fd8d0"
+     },
+     {
+      "max": 0.4,
+      "libelle": "de 0,20 € à 0,40 €",
+      "couleur": "#20e0f8"
+     },
+     {
+      "max": 0.6,
+      "libelle": "de 0,40 € à 0,60 €",
+      "couleur": "#1890f0"
+     },
+     {
+      "max": 1,
+      "libelle": "de 0,60 € à 1 €",
+      "couleur": "#105a90"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 1 €",
+      "couleur": "#0b2a40"
+     }
+    ]
+   },
+   {
+    "id": "b-emprunteurs",
+    "serie": "epci_totale",
+    "titre": "% d'emprunteurs actifs",
+    "legende": "% d'emprunteurs",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#e8f7ef"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#50c0a8"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#3a7aa8"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#3a3570"
+     }
+    ]
+   },
+   {
+    "id": "b-surface",
+    "serie": "epci_totale",
+    "titre": "Surface en m² pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#fff6c8"
+     },
+     {
+      "max": 5,
+      "libelle": "de 3 à 5 m²",
+      "couleur": "#80d0b8"
+     },
+     {
+      "max": 7,
+      "libelle": "de 5 à 7 m²",
+      "couleur": "#3a90c0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#283a90"
+     }
+    ]
+   },
+   {
+    "id": "b-benevoles",
+    "serie": "epci_totale",
+    "titre": "Bénévoles pour 1 000 habitants",
+    "legende": "Bénévoles pour 1 000 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "benevoles",
+     "facteur": 1000
+    },
+    "classes": [
+     {
+      "max": 2,
+      "libelle": "moins de 2 bénévoles",
+      "couleur": "#10c0a8"
+     },
+     {
+      "max": 4,
+      "libelle": "de 2 à 4 bénévoles",
+      "couleur": "#1f7a6a"
+     },
+     {
+      "max": 7,
+      "libelle": "de 4 à 7 bénévoles",
+      "couleur": "#0f4a40"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 bénévoles",
+      "couleur": "#062a24"
+     }
+    ]
+   },
+   {
+    "id": "b-etp",
+    "serie": "epci_totale",
+    "titre": "Équivalent temps plein salariés",
+    "legende": "Habitants pour 1 ETP salarié",
+    "calcul": {
+     "type": "habitants_par",
+     "indicateur": "etp_salaries"
+    },
+    "classes": [
+     {
+      "max": 2000,
+      "libelle": "1 ETP pour moins de 2 000 habitants",
+      "couleur": "#283a90"
+     },
+     {
+      "max": 3500,
+      "libelle": "1 ETP pour 2 000 à 3 500 habitants",
+      "couleur": "#3a90c0"
+     },
+     {
+      "max": 5000,
+      "libelle": "1 ETP pour 3 500 à 5 000 habitants",
+      "couleur": "#80d0b8"
+     },
+     {
+      "max": null,
+      "libelle": "1 ETP pour plus de 5 000 habitants",
+      "couleur": "#fff6c8"
+     }
+    ]
+   },
+   {
+    "id": "b-acquisition",
+    "serie": "epci_totale",
+    "titre": "Budget d'acquisition par habitant",
+    "legende": "Budget d'acquisition par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "acq_total",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 €",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 1.5,
+      "libelle": "de 1 € à 1,50 €",
+      "couleur": "#50c0b0"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1,50 € à 2 €",
+      "couleur": "#4a88b0"
+     },
+     {
+      "max": 2.5,
+      "libelle": "de 2 € à 2,50 €",
+      "couleur": "#3a3570"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 2,50 €",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   },
+   {
+    "id": "b-fonds-propre",
+    "serie": "epci_totale",
+    "titre": "Nombre de documents en fonds propre par habitant",
+    "legende": "Documents en fonds propre par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "fonds_propre",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 document",
+      "couleur": "#f0f8ff"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1 à 2 documents",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 3,
+      "libelle": "de 2 à 3 documents",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 3 documents",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   },
+   {
+    "id": "b-fonds-bg",
+    "serie": "epci_totale",
+    "titre": "Part du fonds biblio.gironde sur le fonds total",
+    "legende": "Part du fonds biblio.gironde",
+    "calcul": {
+     "type": "part",
+     "numerateur": "fonds_bdp",
+     "denominateur": [
+      "fonds_propre",
+      "fonds_bdp"
+     ],
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 20,
+      "libelle": "de 10 à 20 %",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": 30,
+      "libelle": "de 20 à 30 %",
+      "couleur": "#0a0a0a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 30 %",
+      "couleur": "#000000"
+     }
+    ]
+   },
+   {
+    "id": "b-action-culturelle",
+    "serie": "epci_totale",
+    "titre": "Budget d'action culturelle par habitant",
+    "legende": "Budget d'action culturelle par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "dep_action_culturelle",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 0.2,
+      "libelle": "moins de 0,20 €",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 0.4,
+      "libelle": "de 0,20 € à 0,40 €",
+      "couleur": "#50c0b0"
+     },
+     {
+      "max": 0.6,
+      "libelle": "de 0,40 € à 0,60 €",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": 1,
+      "libelle": "de 0,60 € à 1 €",
+      "couleur": "#3a3570"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 1 €",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   }
+  ]
+ }
 }

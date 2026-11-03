@@ -1,182 +1,2241 @@
 {
-  "_notes": [
-    "Chaque indicateur a un identifiant stable. 'source' donne, par année, le ou les codes de l'enquête SLL.",
-    "Clé '*' = valable pour toutes les années non listées. Valeur null = non collecté cette année-là (affiché « non disponible »).",
-    "Syntaxe : 'G123' (un code), 'G146+G149+G152' (somme de codes), 'H437|H441' (Oui si l'un des codes vaut Oui).",
-    "Option « repere » : affiche sous la tuile un indicateur de comparaison (ex. surface recommandée), calculé sur les mêmes établissements. Agrégations : somme, moyenne (moyenne des répondants), oui (nombre de « Oui »), renseigne (nombre de champs remplis), ratio (numerateur / denominateur × facteur, calculé sur les totaux), population (population dédoublonnée par commune), categorie (répartition).",
-    "Pour ajouter une année : déposer ses exports dans data/raw/<année>/, lancer npm run import, puis compléter ici les indicateurs signalés dans rapport-import.md."
-  ],
-  "indicateurs": {
-    "population": { "libelle": "Population desservie (communes dédoublonnées)", "agregation": "population", "source": { "*": "A200" }, "unite": "hab." },
-    "heures_hebdo": { "libelle": "Heures d'ouverture hebdomadaires tous publics", "agregation": "somme", "source": { "*": "C101" }, "unite": "h" },
-    "jours_annuels": { "libelle": "Jours d'ouverture annuels", "agregation": "somme", "source": { "*": "C102" } },
-    "jours_hebdo": { "libelle": "Jours d'ouverture par semaine", "agregation": "moyenne", "source": { "*": "C115" }, "decimales": 1, "note": "Moyenne par lieu de lecture quand plusieurs lieux sont sélectionnés (le Looker additionnait les jours de tous les lieux)." },
-    "surface": { "libelle": "Surface utile nette", "agregation": "somme", "source": { "*": "C301" }, "unite": "m²", "repere": "surface_reco", "repere_libelle": "Recommandation SLL" },
-    "surface_reco": { "libelle": "Surface recommandée SLL (0,07 m²/hab.)", "agregation": "ratio", "numerateur": "population", "facteur": 0.07, "unite": "m²" },
-    "dimanche": { "libelle": "Ouvertes le dimanche", "agregation": "oui", "source": { "*": "C116" } },
-    "accessible": { "libelle": "Accessibles (loi 2005)", "agregation": "oui", "source": { "*": "C309" } },
-    "gratuite": { "libelle": "Inscription et prêt gratuits", "agregation": "oui", "source": { "*": "J201" } },
-    "taux_emprunteurs": { "libelle": "Emprunteurs actifs pour 100 habitants", "agregation": "ratio", "numerateur": "emprunteurs", "denominateur": "population", "facteur": 100, "decimales": 1 },
-
-    "catalogue_informatise": { "libelle": "Catalogue informatisé", "agregation": "oui", "source": { "*": "C201" } },
-    "sigb": { "libelle": "SIGB utilisé", "agregation": "categorie", "source": { "*": "C206" }, "note": "Les lieux d'une bibliothèque intercommunale reprennent le SIGB déclaré par leur réseau. Novalys, Sapentia et Oxalys sont comptés avec Microbib, comme dans le Looker." },
-    "dep_informatique": { "libelle": "Dépenses informatiques (fonctionnement)", "agregation": "somme", "source": { "*": "F504" }, "unite": "€" },
-
-    "postes_publics": { "libelle": "Postes publics avec internet", "agregation": "somme", "source": { "*": "C106" } },
-    "postes_pro": { "libelle": "Postes professionnels avec internet", "agregation": "somme", "source": { "*": "C108" } },
-    "tablettes": { "libelle": "Tablettes", "agregation": "somme", "source": { "*": "C117" } },
-    "liseuses": { "libelle": "Liseuses", "agregation": "somme", "source": { "*": "C118" } },
-    "consoles": { "libelle": "Consoles de jeux vidéo", "agregation": "somme", "source": { "*": "C121" } },
-    "wifi": { "libelle": "Wifi public", "agregation": "oui", "source": { "*": "C120" } },
-    "reseaux_sociaux": { "libelle": "Présentes sur les réseaux sociaux", "agregation": "oui", "source": { "*": "E541" } },
-    "site_internet": { "libelle": "Site internet renseigné", "agregation": "renseigne", "source": { "*": "A115" } },
-
-    "personnel_total": { "libelle": "Personnel total (salariés et bénévoles)", "agregation": "somme", "source": { "*": "G101" } },
-    "salaries": { "libelle": "Salariés", "agregation": "somme", "source": { "*": "G135" } },
-    "benevoles": { "libelle": "Bénévoles", "agregation": "somme", "source": { "*": "G129" } },
-    "benevoles_qualifies": { "libelle": "dont bénévoles qualifiés", "agregation": "somme", "source": { "*": "G130" } },
-    "formation_jours": { "libelle": "Jours de formation professionnelle", "agregation": "somme", "source": { "*": "G205" } },
-    "formation_participants": { "libelle": "Participants à la formation", "agregation": "somme", "source": { "*": "G206" } },
-    "etp_total": { "libelle": "ETP total (salariés et bénévoles)", "agregation": "somme", "source": { "*": "G132" }, "decimales": 1 },
-    "etp_benevoles": { "libelle": "ETP bénévoles", "agregation": "somme", "source": { "*": "G131" }, "decimales": 1 },
-    "etp_benevoles_qualifies": { "libelle": "ETP bénévoles qualifiés", "agregation": "somme", "source": { "2024": "G142" }, "decimales": 1 },
-    "conservateurs": { "libelle": "Conservateurs", "agregation": "somme", "source": { "*": "G103" } },
-    "etp_conservateurs": { "libelle": "ETP conservateurs", "agregation": "somme", "source": { "*": "G104" }, "decimales": 1 },
-    "bibliothecaires": { "libelle": "Bibliothécaires ou attachés", "agregation": "somme", "source": { "*": "G105" } },
-    "etp_bibliothecaires": { "libelle": "ETP bibliothécaires", "agregation": "somme", "source": { "*": "G106" }, "decimales": 1 },
-    "assistants": { "libelle": "Assistants de conservation", "agregation": "somme", "source": { "*": "G133" } },
-    "etp_assistants": { "libelle": "ETP assistants de conservation", "agregation": "somme", "source": { "*": "G134" }, "decimales": 1 },
-    "adjoints": { "libelle": "Adjoints du patrimoine", "agregation": "somme", "source": { "*": "G111" } },
-    "etp_adjoints": { "libelle": "ETP adjoints du patrimoine", "agregation": "somme", "source": { "*": "G112" }, "decimales": 1 },
-    "fpt_a": { "libelle": "Autres filières FPT – catégorie A", "agregation": "somme", "source": { "*": "G114" } },
-    "etp_fpt_a": { "libelle": "ETP autres filières – cat. A", "agregation": "somme", "source": { "*": "G115" }, "decimales": 1 },
-    "fpt_b": { "libelle": "Autres filières FPT – catégorie B", "agregation": "somme", "source": { "*": "G117" } },
-    "etp_fpt_b": { "libelle": "ETP autres filières – cat. B", "agregation": "somme", "source": { "*": "G118" }, "decimales": 1 },
-    "fpt_c": { "libelle": "Autres filières FPT – catégorie C", "agregation": "somme", "source": { "*": "G120" } },
-    "etp_fpt_c": { "libelle": "ETP autres filières – cat. C", "agregation": "somme", "source": { "*": "G121" }, "decimales": 1 },
-    "non_titulaires": { "libelle": "Non titulaires", "agregation": "somme", "source": { "2024": "G123", "2025": "G146+G149+G152" }, "note": "2025 : somme des non-titulaires de catégorie A, B et C (hors vacataires)." },
-    "etp_non_titulaires": { "libelle": "ETP non titulaires", "agregation": "somme", "source": { "2024": "G124" }, "decimales": 1, "note": "Plus collecté séparément à partir de 2025." },
-
-    "livres_fonds": { "libelle": "Fonds de livres", "agregation": "somme", "source": { "*": "D128" } },
-    "livres_fonds_adultes": { "libelle": "Fonds livres adultes", "agregation": "somme", "source": { "*": "D101" } },
-    "livres_fonds_enfants": { "libelle": "Fonds livres enfants", "agregation": "somme", "source": { "*": "D116" } },
-    "livres_acq_adultes": { "libelle": "Acquisitions livres adultes", "agregation": "somme", "source": { "*": "D102" } },
-    "livres_acq_enfants": { "libelle": "Acquisitions livres enfants", "agregation": "somme", "source": { "*": "D117" } },
-    "livres_pilons_adultes": { "libelle": "Éliminations livres adultes", "agregation": "somme", "source": { "*": "D103" } },
-    "livres_pilons_enfants": { "libelle": "Éliminations livres enfants", "agregation": "somme", "source": { "*": "D118" } },
-    "livres_reco": { "libelle": "Fonds recommandé SLL (2,5 livres/hab.)", "agregation": "ratio", "numerateur": "population", "facteur": 2.5 },
-    "livres_par_hab": { "libelle": "Livres par habitant", "agregation": "ratio", "numerateur": "livres_fonds", "denominateur": "population", "decimales": 2 },
-
-    "cd_fonds": { "libelle": "Fonds documents sonores", "agregation": "somme", "source": { "*": "D409" } },
-    "cd_acq": { "libelle": "Acquisitions documents sonores", "agregation": "somme", "source": { "*": "D410" } },
-    "cd_pilons": { "libelle": "Éliminations documents sonores", "agregation": "somme", "source": { "*": "D418" } },
-    "dvd_fonds": { "libelle": "Fonds vidéo", "agregation": "somme", "source": { "*": "D411" } },
-    "dvd_acq": { "libelle": "Acquisitions vidéo", "agregation": "somme", "source": { "*": "D412" } },
-    "dvd_pilons": { "libelle": "Éliminations vidéo", "agregation": "somme", "source": { "*": "D419" } },
-    "presse_abonnements": { "libelle": "Abonnements presse en cours", "agregation": "somme", "source": { "*": "D211" } },
-    "jv_fonds": { "libelle": "Fonds jeux vidéo", "agregation": "somme", "source": { "*": "D444" } },
-    "jv_acq": { "libelle": "Acquisitions jeux vidéo", "agregation": "somme", "source": { "*": "D445" } },
-    "jv_pilons": { "libelle": "Éliminations jeux vidéo", "agregation": "somme", "source": { "*": "D446" } },
-
-    "nouveaux_inscrits": { "libelle": "Nouveaux inscrits", "agregation": "somme", "source": { "*": "E102" } },
-    "emprunteurs": { "libelle": "Emprunteurs actifs", "agregation": "somme", "source": { "*": "E103" } },
-    "emprunteurs_residents": { "libelle": "Emprunteurs actifs résidant sur le territoire", "agregation": "somme", "source": { "*": "E142" } },
-    "frequentation": { "libelle": "Fréquentation (entrées)", "agregation": "somme", "source": { "*": "E147" } },
-    "frequentation_par_emprunteur": { "libelle": "Entrées par emprunteur actif", "agregation": "ratio", "numerateur": "frequentation", "denominateur": "emprunteurs", "decimales": 1, "note": "Calculé sur les totaux (le Looker additionnait des ratios)." },
-
-    "prets_livres": { "libelle": "Prêts de livres", "agregation": "somme", "source": { "*": "E203" } },
-    "prets_presse": { "libelle": "Prêts de publications en série", "agregation": "somme", "source": { "*": "E207" } },
-    "prets_sonores": { "libelle": "Prêts de documents sonores", "agregation": "somme", "source": { "*": "E235" } },
-    "prets_video": { "libelle": "Prêts de documents vidéo", "agregation": "somme", "source": { "*": "E219" } },
-    "prets_autres": { "libelle": "Prêts d'autres documents", "agregation": "somme", "source": { "*": "E223" } },
-    "prets_jeux_societe": { "libelle": "Prêts de jeux de société", "agregation": "somme", "source": { "2025": "E247" } },
-    "prets_jeux_video": { "libelle": "Prêts de jeux vidéo", "agregation": "somme", "source": { "2025": "E248" } },
-    "livres_par_emprunteur": { "libelle": "Livres empruntés par emprunteur actif", "agregation": "ratio", "numerateur": "prets_livres", "denominateur": "emprunteurs", "decimales": 1, "note": "Calculé sur les totaux." },
-
-    "dep_investissement": { "libelle": "Dépenses d'investissement", "agregation": "somme", "source": { "*": "F101" }, "unite": "€" },
-    "dep_personnel": { "libelle": "Dépenses de personnel", "agregation": "somme", "source": { "*": "F201" }, "unite": "€" },
-    "dep_action_culturelle": { "libelle": "Dépenses d'action culturelle", "agregation": "somme", "source": { "*": "F502" }, "unite": "€" },
-    "dep_equipement": { "libelle": "Dépenses d'équipement", "agregation": "somme", "source": { "*": "F507" }, "unite": "€" },
-    "dep_communication": { "libelle": "Dépenses de communication", "agregation": "somme", "source": { "*": "F508" }, "unite": "€" },
-
-    "acq_total": { "libelle": "Dépenses d'acquisition documentaire", "agregation": "somme", "source": { "*": "F714" }, "unite": "€" },
-    "acq_livres": { "libelle": "Acquisition de livres imprimés", "agregation": "somme", "source": { "*": "F701" }, "unite": "€" },
-    "acq_presse": { "libelle": "Acquisition de publications en série", "agregation": "somme", "source": { "*": "F703" }, "unite": "€" },
-    "acq_sonores": { "libelle": "Acquisition de documents sonores", "agregation": "somme", "source": { "*": "F705" }, "unite": "€" },
-    "acq_dvd": { "libelle": "Acquisition de DVD", "agregation": "somme", "source": { "*": "F707" }, "unite": "€" },
-    "acq_jv": { "libelle": "Acquisition de jeux vidéo", "agregation": "somme", "source": { "*": "F710" }, "unite": "€" },
-    "acq_autres": { "libelle": "Acquisition d'autres documents", "agregation": "somme", "source": { "*": "F709" }, "unite": "€" },
-    "acq_numerique": { "libelle": "Acquisition de ressources numériques", "agregation": "somme", "source": { "*": "F713" }, "unite": "€" },
-    "acq_par_hab": { "libelle": "Dépense d'acquisition par habitant", "agregation": "ratio", "numerateur": "acq_total", "denominateur": "population", "decimales": 2, "unite": "€", "note": "Calculé sur les totaux, population dédoublonnée." },
-
-    "subventions": { "libelle": "Subventions d'origine publique", "agregation": "somme", "source": { "*": "F601" }, "unite": "€" },
-    "ressources_privees": { "libelle": "Ressources d'origine privée", "agregation": "somme", "source": { "*": "F602" }, "unite": "€" },
-    "recettes_propres": { "libelle": "Recettes propres", "agregation": "somme", "source": { "*": "F603" }, "unite": "€" },
-    "droits_inscription": { "libelle": "dont droits d'inscription", "agregation": "somme", "source": { "*": "F604" }, "unite": "€" },
-    "droits_usage": { "libelle": "dont droits d'usage des services", "agregation": "somme", "source": { "*": "F605" }, "unite": "€" },
-
-    "expo": { "libelle": "Proposent des expositions", "agregation": "oui", "source": { "*": "H401" } },
-    "conferences": { "libelle": "Conférences, rencontres, lectures", "agregation": "oui", "source": { "*": "H409" } },
-    "concerts": { "libelle": "Concerts, projections", "agregation": "oui", "source": { "2024": "H413", "2025": "H437|H441" } },
-    "contes": { "libelle": "Séances de conte", "agregation": "oui", "source": { "*": "H417" } },
-    "clubs": { "libelle": "Clubs de lecteurs, ateliers d'écriture", "agregation": "oui", "source": { "2024": "H420", "2025": "H445|H449" } },
-    "fetes": { "libelle": "Fêtes, salons du livre, festivals", "agregation": "oui", "source": { "*": "H424" } },
-    "autres_animations": { "libelle": "Autres animations", "agregation": "oui", "source": { "*": "H428" } },
-    "expo_public": { "libelle": "Expositions : public touché", "agregation": "somme", "source": { "2024": "H404" }, "note": "Plus collecté à partir de 2025." },
-    "conferences_public": { "libelle": "Conférences, rencontres, lectures : public", "agregation": "somme", "source": { "*": "H412" } },
-    "concerts_public": { "libelle": "Concerts, projections : public", "agregation": "somme", "source": { "2024": "H416", "2025": "H440+H444" }, "note": "2025 : concert + projection." },
-    "contes_public": { "libelle": "Séances de conte : public", "agregation": "somme", "source": { "*": "H419" } },
-    "clubs_public": { "libelle": "Clubs, ateliers d'écriture : public", "agregation": "somme", "source": { "2024": "H423", "2025": "H448+H452" }, "note": "2025 : clubs de lecteurs + ateliers d'écriture." },
-    "fetes_public": { "libelle": "Fêtes, salons, festivals : public", "agregation": "somme", "source": { "2024": "H427" }, "note": "Plus collecté à partir de 2025." },
-    "autres_public": { "libelle": "Autres animations : public", "agregation": "somme", "source": { "2024": "H431" }, "note": "Plus collecté à partir de 2025." },
-
-    "hors_murs": { "libelle": "Mènent des actions hors les murs", "agregation": "oui", "source": { "*": "H501" } },
-    "hors_murs_actions": { "libelle": "Actions hors les murs", "agregation": "somme", "source": { "*": "H502" } },
-    "hors_murs_public": { "libelle": "Actions hors les murs : public", "agregation": "somme", "source": { "2024": "H503" }, "note": "Plus collecté à partir de 2025." },
-    "portage": { "libelle": "Proposent le portage à domicile", "agregation": "oui", "source": { "*": "H504" } },
-    "portage_actions": { "libelle": "Portage à domicile : actions", "agregation": "somme", "source": { "*": "H505" } },
-    "portage_public": { "libelle": "Portage à domicile : personnes", "agregation": "somme", "source": { "*": "H506" } },
-    "coop_locale": { "libelle": "Coopération locale", "agregation": "oui", "source": { "*": "H601" } },
-    "coop_catalogue": { "libelle": "Catalogue commun", "agregation": "oui", "source": { "*": "H611" } },
-    "coop_portail": { "libelle": "Portail documentaire commun", "agregation": "oui", "source": { "*": "H612" } },
-    "coop_politique_doc": { "libelle": "Politique documentaire commune", "agregation": "oui", "source": { "*": "H613" } },
-    "coop_navette": { "libelle": "Navette documentaire", "agregation": "oui", "source": { "*": "H614" } },
-    "coop_carte": { "libelle": "Carte unique de lecteur", "agregation": "oui", "source": { "*": "H615" } },
-    "coop_action_culturelle": { "libelle": "Action culturelle commune", "agregation": "oui", "source": { "*": "H617" } },
-
-    "ecoles": { "libelle": "Partenariat avec des écoles", "agregation": "oui", "source": { "*": "H101" } },
-    "ecoles_classes": { "libelle": "Écoles : classes", "agregation": "somme", "source": { "*": "H102" } },
-    "ecoles_accueils": { "libelle": "Écoles : accueils de classes", "agregation": "somme", "source": { "*": "H130" } },
-    "ecoles_public": { "libelle": "Écoles : élèves touchés", "agregation": "somme", "source": { "*": "H103" } },
-    "colleges": { "libelle": "Partenariat avec des collèges", "agregation": "oui", "source": { "*": "H104" } },
-    "colleges_classes": { "libelle": "Collèges : classes", "agregation": "somme", "source": { "*": "H105" } },
-    "colleges_accueils": { "libelle": "Collèges : accueils de classes", "agregation": "somme", "source": { "*": "H131" } },
-    "colleges_public": { "libelle": "Collèges : élèves touchés", "agregation": "somme", "source": { "*": "H106" } },
-    "lycees": { "libelle": "Partenariat avec des lycées", "agregation": "oui", "source": { "*": "H107" } },
-    "lycees_classes": { "libelle": "Lycées : classes", "agregation": "somme", "source": { "*": "H108" } },
-    "lycees_accueils": { "libelle": "Lycées : accueils de classes", "agregation": "somme", "source": { "*": "H132" } },
-    "lycees_public": { "libelle": "Lycées : élèves touchés", "agregation": "somme", "source": { "*": "H109" } },
-    "superieur": { "libelle": "Partenariat avec le supérieur", "agregation": "oui", "source": { "*": "H110" } },
-    "superieur_public": { "libelle": "Supérieur : public touché", "agregation": "somme", "source": { "*": "H111" } }
+ "_notes": [
+  "Chaque indicateur a un identifiant stable. 'source' donne, par année, le ou les codes de l'enquête SLL.",
+  "Clé '*' = valable pour toutes les années non listées. Valeur null = non collecté cette année-là (affiché « non disponible »).",
+  "Syntaxe : 'G123' (un code), 'G146+G149+G152' (somme de codes), 'H437|H441' (Oui si l'un des codes vaut Oui).",
+  "Option « repere » : affiche sous la tuile un indicateur de comparaison (ex. surface recommandée), calculé sur les mêmes établissements. Agrégations : somme, moyenne (moyenne des répondants), oui (nombre de « Oui »), renseigne (nombre de champs remplis), ratio (numerateur / denominateur × facteur, calculé sur les totaux), population (population dédoublonnée par commune), categorie (répartition).",
+  "Pour ajouter une année : déposer ses exports dans data/raw/<année>/, lancer npm run import, puis compléter ici les indicateurs signalés dans rapport-import.md."
+ ],
+ "indicateurs": {
+  "population": {
+   "libelle": "Population desservie (communes dédoublonnées)",
+   "agregation": "population",
+   "source": {
+    "*": "A200"
+   },
+   "unite": "hab."
   },
-
-  "pages": [
-    { "id": "general", "titre": "Général", "tuiles": ["population", "heures_hebdo", "jours_hebdo", "jours_annuels", "surface", "taux_emprunteurs", "dimanche", "accessible", "gratuite"], "carte": true, "repartition": "typologie", "graphique": ["heures_hebdo", "surface"], "tableau": ["population", "surface", "surface_reco", "heures_hebdo", "jours_hebdo", "taux_emprunteurs"] },
-    { "id": "sigb", "titre": "SIGB", "tuiles": ["catalogue_informatise", "dep_informatique"], "repartition": "sigb", "graphique": ["dep_informatique"], "tableau": ["catalogue_informatise", "sigb", "dep_informatique"] },
-    { "id": "numerique", "titre": "Services numériques", "tuiles": ["postes_publics", "postes_pro", "tablettes", "liseuses", "consoles", "wifi", "reseaux_sociaux", "site_internet"], "graphique": ["postes_publics", "tablettes", "liseuses"], "tableau": ["postes_publics", "postes_pro", "tablettes", "liseuses", "consoles", "wifi"] },
-    { "id": "rh1", "titre": "Personnel", "tuiles": ["personnel_total", "salaries", "benevoles", "benevoles_qualifies", "etp_total", "formation_jours", "formation_participants"], "graphique": ["salaries", "benevoles"], "tableau": ["personnel_total", "salaries", "benevoles", "etp_total", "formation_jours"] },
-    { "id": "rh2", "titre": "Personnel par catégorie", "tuiles": ["conservateurs", "etp_conservateurs", "bibliothecaires", "etp_bibliothecaires", "assistants", "etp_assistants", "adjoints", "etp_adjoints", "fpt_a", "etp_fpt_a", "fpt_b", "etp_fpt_b", "fpt_c", "etp_fpt_c", "non_titulaires", "etp_non_titulaires", "benevoles", "etp_benevoles", "etp_benevoles_qualifies"], "graphique": ["etp_conservateurs", "etp_bibliothecaires", "etp_assistants", "etp_adjoints"], "tableau": ["etp_total", "etp_bibliothecaires", "etp_assistants", "etp_adjoints", "etp_benevoles"] },
-    { "id": "livres", "titre": "Collections : livres", "tuiles": ["livres_fonds", "livres_fonds_adultes", "livres_fonds_enfants", "livres_acq_adultes", "livres_acq_enfants", "livres_pilons_adultes", "livres_pilons_enfants", "livres_reco", "livres_par_hab"], "graphique": ["livres_fonds_adultes", "livres_fonds_enfants"], "tableau": ["livres_fonds", "livres_acq_adultes", "livres_acq_enfants", "livres_par_hab"] },
-    { "id": "cd_dvd", "titre": "Collections : CD et DVD", "tuiles": ["cd_fonds", "cd_acq", "cd_pilons", "dvd_fonds", "dvd_acq", "dvd_pilons"], "graphique": ["cd_fonds", "dvd_fonds"], "tableau": ["cd_fonds", "cd_acq", "dvd_fonds", "dvd_acq"] },
-    { "id": "autres_supports", "titre": "Collections : presse et jeux vidéo", "tuiles": ["presse_abonnements", "jv_fonds", "jv_acq", "jv_pilons"], "graphique": ["presse_abonnements", "jv_fonds"], "tableau": ["presse_abonnements", "jv_fonds", "jv_acq"] },
-    { "id": "usagers", "titre": "Usagers", "tuiles": ["emprunteurs", "nouveaux_inscrits", "emprunteurs_residents", "frequentation", "frequentation_par_emprunteur", "taux_emprunteurs"], "graphique": ["emprunteurs", "nouveaux_inscrits"], "tableau": ["population", "emprunteurs", "taux_emprunteurs", "nouveaux_inscrits", "frequentation"] },
-    { "id": "prets_livres", "titre": "Prêts : livres et presse", "tuiles": ["prets_livres", "prets_presse", "livres_par_emprunteur"], "graphique": ["prets_livres", "prets_presse"], "tableau": ["prets_livres", "prets_presse", "emprunteurs", "livres_par_emprunteur"] },
-    { "id": "prets_autres", "titre": "Prêts : autres documents", "tuiles": ["prets_sonores", "prets_video", "prets_autres", "prets_jeux_societe", "prets_jeux_video"], "graphique": ["prets_sonores", "prets_video", "prets_autres"], "tableau": ["prets_sonores", "prets_video", "prets_autres"] },
-    { "id": "depenses", "titre": "Dépenses", "tuiles": ["dep_investissement", "dep_personnel", "dep_action_culturelle", "dep_informatique", "dep_equipement", "dep_communication"], "graphique": ["dep_action_culturelle", "dep_informatique", "dep_equipement", "dep_communication"], "tableau": ["dep_investissement", "dep_personnel", "dep_action_culturelle", "dep_informatique"] },
-    { "id": "depenses_doc", "titre": "Dépenses documentaires", "tuiles": ["acq_total", "acq_par_hab", "acq_livres", "acq_presse", "acq_sonores", "acq_dvd", "acq_jv", "acq_autres", "acq_numerique"], "graphique": ["acq_livres", "acq_presse", "acq_dvd", "acq_numerique"], "tableau": ["acq_total", "acq_par_hab", "acq_livres", "acq_numerique"] },
-    { "id": "ressources", "titre": "Ressources et subventions", "tuiles": ["subventions", "ressources_privees", "recettes_propres", "droits_inscription", "droits_usage"], "graphique": ["subventions", "recettes_propres", "ressources_privees"], "tableau": ["subventions", "recettes_propres", "droits_inscription", "ressources_privees"] },
-    { "id": "action_culturelle", "titre": "Action culturelle", "tuiles": ["expo_public", "conferences_public", "concerts_public", "contes_public", "clubs_public", "fetes_public", "autres_public"], "graphique": ["conferences_public", "contes_public", "concerts_public"], "tableau": ["expo", "conferences", "concerts", "contes", "clubs", "fetes", "autres_animations"] },
-    { "id": "hors_murs", "titre": "Hors les murs et coopération", "tuiles": ["hors_murs_actions", "hors_murs_public", "portage_actions", "portage_public", "coop_locale", "coop_catalogue", "coop_navette", "coop_carte"], "graphique": ["hors_murs_actions", "portage_actions"], "tableau": ["hors_murs", "portage", "coop_locale", "coop_catalogue", "coop_portail", "coop_politique_doc", "coop_navette", "coop_carte", "coop_action_culturelle"] },
-    { "id": "scolaires", "titre": "Partenariats scolaires", "tuiles": ["ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges_classes", "colleges_accueils", "colleges_public", "lycees_classes", "lycees_accueils", "lycees_public", "superieur_public"], "graphique": ["ecoles_public", "colleges_public", "lycees_public"], "tableau": ["ecoles", "ecoles_classes", "ecoles_accueils", "ecoles_public", "colleges", "lycees", "superieur"] }
+  "heures_hebdo": {
+   "libelle": "Heures d'ouverture hebdomadaires tous publics",
+   "agregation": "somme",
+   "source": {
+    "*": "C101"
+   },
+   "unite": "h"
+  },
+  "jours_annuels": {
+   "libelle": "Jours d'ouverture annuels",
+   "agregation": "somme",
+   "source": {
+    "*": "C102"
+   }
+  },
+  "jours_hebdo": {
+   "libelle": "Jours d'ouverture par semaine",
+   "agregation": "moyenne",
+   "source": {
+    "*": "C115"
+   },
+   "decimales": 1,
+   "note": "Moyenne par lieu de lecture quand plusieurs lieux sont sélectionnés (le Looker additionnait les jours de tous les lieux)."
+  },
+  "surface": {
+   "libelle": "Surface utile nette",
+   "agregation": "somme",
+   "source": {
+    "*": "C301"
+   },
+   "unite": "m²",
+   "repere": "surface_reco",
+   "repere_libelle": "Recommandation SLL"
+  },
+  "surface_reco": {
+   "libelle": "Surface recommandée SLL (0,07 m²/hab.)",
+   "agregation": "ratio",
+   "numerateur": "population",
+   "facteur": 0.07,
+   "unite": "m²"
+  },
+  "dimanche": {
+   "libelle": "Ouvertes le dimanche",
+   "agregation": "oui",
+   "source": {
+    "*": "C116"
+   }
+  },
+  "accessible": {
+   "libelle": "Accessibles (loi 2005)",
+   "agregation": "oui",
+   "source": {
+    "*": "C309"
+   }
+  },
+  "gratuite": {
+   "libelle": "Inscription et prêt gratuits",
+   "agregation": "oui",
+   "source": {
+    "*": "J201"
+   }
+  },
+  "taux_emprunteurs": {
+   "libelle": "Emprunteurs actifs pour 100 habitants",
+   "agregation": "ratio",
+   "numerateur": "emprunteurs",
+   "denominateur": "population",
+   "facteur": 100,
+   "decimales": 1
+  },
+  "catalogue_informatise": {
+   "libelle": "Catalogue informatisé",
+   "agregation": "oui",
+   "source": {
+    "*": "C201"
+   }
+  },
+  "sigb": {
+   "libelle": "SIGB utilisé",
+   "agregation": "categorie",
+   "source": {
+    "*": "C206"
+   },
+   "note": "Les lieux d'une bibliothèque intercommunale reprennent le SIGB déclaré par leur réseau. Novalys, Sapentia et Oxalys sont comptés avec Microbib, comme dans le Looker."
+  },
+  "dep_informatique": {
+   "libelle": "Dépenses informatiques (fonctionnement)",
+   "agregation": "somme",
+   "source": {
+    "*": "F504"
+   },
+   "unite": "€"
+  },
+  "postes_publics": {
+   "libelle": "Postes publics avec internet",
+   "agregation": "somme",
+   "source": {
+    "*": "C106"
+   }
+  },
+  "postes_pro": {
+   "libelle": "Postes professionnels avec internet",
+   "agregation": "somme",
+   "source": {
+    "*": "C108"
+   }
+  },
+  "tablettes": {
+   "libelle": "Tablettes",
+   "agregation": "somme",
+   "source": {
+    "*": "C117"
+   }
+  },
+  "liseuses": {
+   "libelle": "Liseuses",
+   "agregation": "somme",
+   "source": {
+    "*": "C118"
+   }
+  },
+  "consoles": {
+   "libelle": "Consoles de jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "C121"
+   }
+  },
+  "wifi": {
+   "libelle": "Wifi public",
+   "agregation": "oui",
+   "source": {
+    "*": "C120"
+   }
+  },
+  "reseaux_sociaux": {
+   "libelle": "Présentes sur les réseaux sociaux",
+   "agregation": "oui",
+   "source": {
+    "*": "E541"
+   }
+  },
+  "site_internet": {
+   "libelle": "Site internet renseigné",
+   "agregation": "renseigne",
+   "source": {
+    "*": "A115"
+   }
+  },
+  "personnel_total": {
+   "libelle": "Personnel total (salariés et bénévoles)",
+   "agregation": "somme",
+   "source": {
+    "*": "G101"
+   }
+  },
+  "salaries": {
+   "libelle": "Salariés",
+   "agregation": "somme",
+   "source": {
+    "*": "G135"
+   }
+  },
+  "benevoles": {
+   "libelle": "Bénévoles",
+   "agregation": "somme",
+   "source": {
+    "*": "G129"
+   }
+  },
+  "benevoles_qualifies": {
+   "libelle": "dont bénévoles qualifiés",
+   "agregation": "somme",
+   "source": {
+    "*": "G130"
+   }
+  },
+  "formation_jours": {
+   "libelle": "Jours de formation professionnelle",
+   "agregation": "somme",
+   "source": {
+    "*": "G205"
+   }
+  },
+  "formation_participants": {
+   "libelle": "Participants à la formation",
+   "agregation": "somme",
+   "source": {
+    "*": "G206"
+   }
+  },
+  "etp_total": {
+   "libelle": "ETP total (salariés et bénévoles)",
+   "agregation": "somme",
+   "source": {
+    "*": "G132"
+   },
+   "decimales": 1
+  },
+  "etp_benevoles": {
+   "libelle": "ETP bénévoles",
+   "agregation": "somme",
+   "source": {
+    "*": "G131"
+   },
+   "decimales": 1
+  },
+  "etp_benevoles_qualifies": {
+   "libelle": "ETP bénévoles qualifiés",
+   "agregation": "somme",
+   "source": {
+    "2024": "G142"
+   },
+   "decimales": 1
+  },
+  "conservateurs": {
+   "libelle": "Conservateurs",
+   "agregation": "somme",
+   "source": {
+    "*": "G103"
+   }
+  },
+  "etp_conservateurs": {
+   "libelle": "ETP conservateurs",
+   "agregation": "somme",
+   "source": {
+    "*": "G104"
+   },
+   "decimales": 1
+  },
+  "bibliothecaires": {
+   "libelle": "Bibliothécaires ou attachés",
+   "agregation": "somme",
+   "source": {
+    "*": "G105"
+   }
+  },
+  "etp_bibliothecaires": {
+   "libelle": "ETP bibliothécaires",
+   "agregation": "somme",
+   "source": {
+    "*": "G106"
+   },
+   "decimales": 1
+  },
+  "assistants": {
+   "libelle": "Assistants de conservation",
+   "agregation": "somme",
+   "source": {
+    "*": "G133"
+   }
+  },
+  "etp_assistants": {
+   "libelle": "ETP assistants de conservation",
+   "agregation": "somme",
+   "source": {
+    "*": "G134"
+   },
+   "decimales": 1
+  },
+  "adjoints": {
+   "libelle": "Adjoints du patrimoine",
+   "agregation": "somme",
+   "source": {
+    "*": "G111"
+   }
+  },
+  "etp_adjoints": {
+   "libelle": "ETP adjoints du patrimoine",
+   "agregation": "somme",
+   "source": {
+    "*": "G112"
+   },
+   "decimales": 1
+  },
+  "fpt_a": {
+   "libelle": "Autres filières FPT – catégorie A",
+   "agregation": "somme",
+   "source": {
+    "*": "G114"
+   }
+  },
+  "etp_fpt_a": {
+   "libelle": "ETP autres filières – cat. A",
+   "agregation": "somme",
+   "source": {
+    "*": "G115"
+   },
+   "decimales": 1
+  },
+  "fpt_b": {
+   "libelle": "Autres filières FPT – catégorie B",
+   "agregation": "somme",
+   "source": {
+    "*": "G117"
+   }
+  },
+  "etp_fpt_b": {
+   "libelle": "ETP autres filières – cat. B",
+   "agregation": "somme",
+   "source": {
+    "*": "G118"
+   },
+   "decimales": 1
+  },
+  "fpt_c": {
+   "libelle": "Autres filières FPT – catégorie C",
+   "agregation": "somme",
+   "source": {
+    "*": "G120"
+   }
+  },
+  "etp_fpt_c": {
+   "libelle": "ETP autres filières – cat. C",
+   "agregation": "somme",
+   "source": {
+    "*": "G121"
+   },
+   "decimales": 1
+  },
+  "non_titulaires": {
+   "libelle": "Non titulaires",
+   "agregation": "somme",
+   "source": {
+    "2024": "G123",
+    "2025": "G146+G149+G152"
+   },
+   "note": "2025 : somme des non-titulaires de catégorie A, B et C (hors vacataires)."
+  },
+  "etp_non_titulaires": {
+   "libelle": "ETP non titulaires",
+   "agregation": "somme",
+   "source": {
+    "2024": "G124"
+   },
+   "decimales": 1,
+   "note": "Plus collecté séparément à partir de 2025."
+  },
+  "livres_fonds": {
+   "libelle": "Fonds de livres",
+   "agregation": "somme",
+   "source": {
+    "*": "D128"
+   }
+  },
+  "livres_fonds_adultes": {
+   "libelle": "Fonds livres adultes",
+   "agregation": "somme",
+   "source": {
+    "*": "D101"
+   }
+  },
+  "livres_fonds_enfants": {
+   "libelle": "Fonds livres enfants",
+   "agregation": "somme",
+   "source": {
+    "*": "D116"
+   }
+  },
+  "livres_acq_adultes": {
+   "libelle": "Acquisitions livres adultes",
+   "agregation": "somme",
+   "source": {
+    "*": "D102"
+   }
+  },
+  "livres_acq_enfants": {
+   "libelle": "Acquisitions livres enfants",
+   "agregation": "somme",
+   "source": {
+    "*": "D117"
+   }
+  },
+  "livres_pilons_adultes": {
+   "libelle": "Éliminations livres adultes",
+   "agregation": "somme",
+   "source": {
+    "*": "D103"
+   }
+  },
+  "livres_pilons_enfants": {
+   "libelle": "Éliminations livres enfants",
+   "agregation": "somme",
+   "source": {
+    "*": "D118"
+   }
+  },
+  "livres_reco": {
+   "libelle": "Fonds recommandé SLL (2,5 livres/hab.)",
+   "agregation": "ratio",
+   "numerateur": "population",
+   "facteur": 2.5
+  },
+  "livres_par_hab": {
+   "libelle": "Livres par habitant",
+   "agregation": "ratio",
+   "numerateur": "livres_fonds",
+   "denominateur": "population",
+   "decimales": 2
+  },
+  "cd_fonds": {
+   "libelle": "Fonds documents sonores",
+   "agregation": "somme",
+   "source": {
+    "*": "D409"
+   }
+  },
+  "cd_acq": {
+   "libelle": "Acquisitions documents sonores",
+   "agregation": "somme",
+   "source": {
+    "*": "D410"
+   }
+  },
+  "cd_pilons": {
+   "libelle": "Éliminations documents sonores",
+   "agregation": "somme",
+   "source": {
+    "*": "D418"
+   }
+  },
+  "dvd_fonds": {
+   "libelle": "Fonds vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D411"
+   }
+  },
+  "dvd_acq": {
+   "libelle": "Acquisitions vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D412"
+   }
+  },
+  "dvd_pilons": {
+   "libelle": "Éliminations vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D419"
+   }
+  },
+  "presse_abonnements": {
+   "libelle": "Abonnements presse en cours",
+   "agregation": "somme",
+   "source": {
+    "*": "D211"
+   }
+  },
+  "jv_fonds": {
+   "libelle": "Fonds jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D444"
+   }
+  },
+  "jv_acq": {
+   "libelle": "Acquisitions jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D445"
+   }
+  },
+  "jv_pilons": {
+   "libelle": "Éliminations jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "D446"
+   }
+  },
+  "nouveaux_inscrits": {
+   "libelle": "Nouveaux inscrits",
+   "agregation": "somme",
+   "source": {
+    "*": "E102"
+   }
+  },
+  "emprunteurs": {
+   "libelle": "Emprunteurs actifs",
+   "agregation": "somme",
+   "source": {
+    "*": "E103"
+   }
+  },
+  "emprunteurs_residents": {
+   "libelle": "Emprunteurs actifs résidant sur le territoire",
+   "agregation": "somme",
+   "source": {
+    "*": "E142"
+   }
+  },
+  "frequentation": {
+   "libelle": "Fréquentation (entrées)",
+   "agregation": "somme",
+   "source": {
+    "*": "E147"
+   }
+  },
+  "frequentation_par_emprunteur": {
+   "libelle": "Entrées par emprunteur actif",
+   "agregation": "ratio",
+   "numerateur": "frequentation",
+   "denominateur": "emprunteurs",
+   "decimales": 1,
+   "note": "Calculé sur les totaux (le Looker additionnait des ratios)."
+  },
+  "prets_livres": {
+   "libelle": "Prêts de livres",
+   "agregation": "somme",
+   "source": {
+    "*": "E203"
+   }
+  },
+  "prets_presse": {
+   "libelle": "Prêts de publications en série",
+   "agregation": "somme",
+   "source": {
+    "*": "E207"
+   }
+  },
+  "prets_sonores": {
+   "libelle": "Prêts de documents sonores",
+   "agregation": "somme",
+   "source": {
+    "*": "E235"
+   }
+  },
+  "prets_video": {
+   "libelle": "Prêts de documents vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "E219"
+   }
+  },
+  "prets_autres": {
+   "libelle": "Prêts d'autres documents",
+   "agregation": "somme",
+   "source": {
+    "*": "E223"
+   }
+  },
+  "prets_jeux_societe": {
+   "libelle": "Prêts de jeux de société",
+   "agregation": "somme",
+   "source": {
+    "2025": "E247"
+   }
+  },
+  "prets_jeux_video": {
+   "libelle": "Prêts de jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "2025": "E248"
+   }
+  },
+  "livres_par_emprunteur": {
+   "libelle": "Livres empruntés par emprunteur actif",
+   "agregation": "ratio",
+   "numerateur": "prets_livres",
+   "denominateur": "emprunteurs",
+   "decimales": 1,
+   "note": "Calculé sur les totaux."
+  },
+  "dep_investissement": {
+   "libelle": "Dépenses d'investissement",
+   "agregation": "somme",
+   "source": {
+    "*": "F101"
+   },
+   "unite": "€"
+  },
+  "dep_personnel": {
+   "libelle": "Dépenses de personnel",
+   "agregation": "somme",
+   "source": {
+    "*": "F201"
+   },
+   "unite": "€"
+  },
+  "dep_action_culturelle": {
+   "libelle": "Dépenses d'action culturelle",
+   "agregation": "somme",
+   "source": {
+    "*": "F502"
+   },
+   "unite": "€"
+  },
+  "dep_equipement": {
+   "libelle": "Dépenses d'équipement",
+   "agregation": "somme",
+   "source": {
+    "*": "F507"
+   },
+   "unite": "€"
+  },
+  "dep_communication": {
+   "libelle": "Dépenses de communication",
+   "agregation": "somme",
+   "source": {
+    "*": "F508"
+   },
+   "unite": "€"
+  },
+  "acq_total": {
+   "libelle": "Dépenses d'acquisition documentaire",
+   "agregation": "somme",
+   "source": {
+    "*": "F714"
+   },
+   "unite": "€"
+  },
+  "acq_livres": {
+   "libelle": "Acquisition de livres imprimés",
+   "agregation": "somme",
+   "source": {
+    "*": "F701"
+   },
+   "unite": "€"
+  },
+  "acq_presse": {
+   "libelle": "Acquisition de publications en série",
+   "agregation": "somme",
+   "source": {
+    "*": "F703"
+   },
+   "unite": "€"
+  },
+  "acq_sonores": {
+   "libelle": "Acquisition de documents sonores",
+   "agregation": "somme",
+   "source": {
+    "*": "F705"
+   },
+   "unite": "€"
+  },
+  "acq_dvd": {
+   "libelle": "Acquisition de DVD",
+   "agregation": "somme",
+   "source": {
+    "*": "F707"
+   },
+   "unite": "€"
+  },
+  "acq_jv": {
+   "libelle": "Acquisition de jeux vidéo",
+   "agregation": "somme",
+   "source": {
+    "*": "F710"
+   },
+   "unite": "€"
+  },
+  "acq_autres": {
+   "libelle": "Acquisition d'autres documents",
+   "agregation": "somme",
+   "source": {
+    "*": "F709"
+   },
+   "unite": "€"
+  },
+  "acq_numerique": {
+   "libelle": "Acquisition de ressources numériques",
+   "agregation": "somme",
+   "source": {
+    "*": "F713"
+   },
+   "unite": "€"
+  },
+  "acq_par_hab": {
+   "libelle": "Dépense d'acquisition par habitant",
+   "agregation": "ratio",
+   "numerateur": "acq_total",
+   "denominateur": "population",
+   "decimales": 2,
+   "unite": "€",
+   "note": "Calculé sur les totaux, population dédoublonnée."
+  },
+  "subventions": {
+   "libelle": "Subventions d'origine publique",
+   "agregation": "somme",
+   "source": {
+    "*": "F601"
+   },
+   "unite": "€"
+  },
+  "ressources_privees": {
+   "libelle": "Ressources d'origine privée",
+   "agregation": "somme",
+   "source": {
+    "*": "F602"
+   },
+   "unite": "€"
+  },
+  "recettes_propres": {
+   "libelle": "Recettes propres",
+   "agregation": "somme",
+   "source": {
+    "*": "F603"
+   },
+   "unite": "€"
+  },
+  "droits_inscription": {
+   "libelle": "dont droits d'inscription",
+   "agregation": "somme",
+   "source": {
+    "*": "F604"
+   },
+   "unite": "€"
+  },
+  "droits_usage": {
+   "libelle": "dont droits d'usage des services",
+   "agregation": "somme",
+   "source": {
+    "*": "F605"
+   },
+   "unite": "€"
+  },
+  "expo": {
+   "libelle": "Proposent des expositions",
+   "agregation": "oui",
+   "source": {
+    "*": "H401"
+   }
+  },
+  "conferences": {
+   "libelle": "Conférences, rencontres, lectures",
+   "agregation": "oui",
+   "source": {
+    "*": "H409"
+   }
+  },
+  "concerts": {
+   "libelle": "Concerts, projections",
+   "agregation": "oui",
+   "source": {
+    "2024": "H413",
+    "2025": "H437|H441"
+   }
+  },
+  "contes": {
+   "libelle": "Séances de conte",
+   "agregation": "oui",
+   "source": {
+    "*": "H417"
+   }
+  },
+  "clubs": {
+   "libelle": "Clubs de lecteurs, ateliers d'écriture",
+   "agregation": "oui",
+   "source": {
+    "2024": "H420",
+    "2025": "H445|H449"
+   }
+  },
+  "fetes": {
+   "libelle": "Fêtes, salons du livre, festivals",
+   "agregation": "oui",
+   "source": {
+    "*": "H424"
+   }
+  },
+  "autres_animations": {
+   "libelle": "Autres animations",
+   "agregation": "oui",
+   "source": {
+    "*": "H428"
+   }
+  },
+  "expo_public": {
+   "libelle": "Expositions : public touché",
+   "agregation": "somme",
+   "source": {
+    "2024": "H404"
+   },
+   "note": "Plus collecté à partir de 2025."
+  },
+  "conferences_public": {
+   "libelle": "Conférences, rencontres, lectures : public",
+   "agregation": "somme",
+   "source": {
+    "*": "H412"
+   }
+  },
+  "concerts_public": {
+   "libelle": "Concerts, projections : public",
+   "agregation": "somme",
+   "source": {
+    "2024": "H416",
+    "2025": "H440+H444"
+   },
+   "note": "2025 : concert + projection."
+  },
+  "contes_public": {
+   "libelle": "Séances de conte : public",
+   "agregation": "somme",
+   "source": {
+    "*": "H419"
+   }
+  },
+  "clubs_public": {
+   "libelle": "Clubs, ateliers d'écriture : public",
+   "agregation": "somme",
+   "source": {
+    "2024": "H423",
+    "2025": "H448+H452"
+   },
+   "note": "2025 : clubs de lecteurs + ateliers d'écriture."
+  },
+  "fetes_public": {
+   "libelle": "Fêtes, salons, festivals : public",
+   "agregation": "somme",
+   "source": {
+    "2024": "H427"
+   },
+   "note": "Plus collecté à partir de 2025."
+  },
+  "autres_public": {
+   "libelle": "Autres animations : public",
+   "agregation": "somme",
+   "source": {
+    "2024": "H431"
+   },
+   "note": "Plus collecté à partir de 2025."
+  },
+  "hors_murs": {
+   "libelle": "Mènent des actions hors les murs",
+   "agregation": "oui",
+   "source": {
+    "*": "H501"
+   }
+  },
+  "hors_murs_actions": {
+   "libelle": "Actions hors les murs",
+   "agregation": "somme",
+   "source": {
+    "*": "H502"
+   }
+  },
+  "hors_murs_public": {
+   "libelle": "Actions hors les murs : public",
+   "agregation": "somme",
+   "source": {
+    "2024": "H503"
+   },
+   "note": "Plus collecté à partir de 2025."
+  },
+  "portage": {
+   "libelle": "Proposent le portage à domicile",
+   "agregation": "oui",
+   "source": {
+    "*": "H504"
+   }
+  },
+  "portage_actions": {
+   "libelle": "Portage à domicile : actions",
+   "agregation": "somme",
+   "source": {
+    "*": "H505"
+   }
+  },
+  "portage_public": {
+   "libelle": "Portage à domicile : personnes",
+   "agregation": "somme",
+   "source": {
+    "*": "H506"
+   }
+  },
+  "coop_locale": {
+   "libelle": "Coopération locale",
+   "agregation": "oui",
+   "source": {
+    "*": "H601"
+   }
+  },
+  "coop_catalogue": {
+   "libelle": "Catalogue commun",
+   "agregation": "oui",
+   "source": {
+    "*": "H611"
+   }
+  },
+  "coop_portail": {
+   "libelle": "Portail documentaire commun",
+   "agregation": "oui",
+   "source": {
+    "*": "H612"
+   }
+  },
+  "coop_politique_doc": {
+   "libelle": "Politique documentaire commune",
+   "agregation": "oui",
+   "source": {
+    "*": "H613"
+   }
+  },
+  "coop_navette": {
+   "libelle": "Navette documentaire",
+   "agregation": "oui",
+   "source": {
+    "*": "H614"
+   }
+  },
+  "coop_carte": {
+   "libelle": "Carte unique de lecteur",
+   "agregation": "oui",
+   "source": {
+    "*": "H615"
+   }
+  },
+  "coop_action_culturelle": {
+   "libelle": "Action culturelle commune",
+   "agregation": "oui",
+   "source": {
+    "*": "H617"
+   }
+  },
+  "ecoles": {
+   "libelle": "Partenariat avec des écoles",
+   "agregation": "oui",
+   "source": {
+    "*": "H101"
+   }
+  },
+  "ecoles_classes": {
+   "libelle": "Écoles : classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H102"
+   }
+  },
+  "ecoles_accueils": {
+   "libelle": "Écoles : accueils de classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H130"
+   }
+  },
+  "ecoles_public": {
+   "libelle": "Écoles : élèves touchés",
+   "agregation": "somme",
+   "source": {
+    "*": "H103"
+   }
+  },
+  "colleges": {
+   "libelle": "Partenariat avec des collèges",
+   "agregation": "oui",
+   "source": {
+    "*": "H104"
+   }
+  },
+  "colleges_classes": {
+   "libelle": "Collèges : classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H105"
+   }
+  },
+  "colleges_accueils": {
+   "libelle": "Collèges : accueils de classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H131"
+   }
+  },
+  "colleges_public": {
+   "libelle": "Collèges : élèves touchés",
+   "agregation": "somme",
+   "source": {
+    "*": "H106"
+   }
+  },
+  "lycees": {
+   "libelle": "Partenariat avec des lycées",
+   "agregation": "oui",
+   "source": {
+    "*": "H107"
+   }
+  },
+  "lycees_classes": {
+   "libelle": "Lycées : classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H108"
+   }
+  },
+  "lycees_accueils": {
+   "libelle": "Lycées : accueils de classes",
+   "agregation": "somme",
+   "source": {
+    "*": "H132"
+   }
+  },
+  "lycees_public": {
+   "libelle": "Lycées : élèves touchés",
+   "agregation": "somme",
+   "source": {
+    "*": "H109"
+   }
+  },
+  "superieur": {
+   "libelle": "Partenariat avec le supérieur",
+   "agregation": "oui",
+   "source": {
+    "*": "H110"
+   }
+  },
+  "superieur_public": {
+   "libelle": "Supérieur : public touché",
+   "agregation": "somme",
+   "source": {
+    "*": "H111"
+   }
+  },
+  "internet_public": {
+   "libelle": "Accès public à internet dans la bibliothèque",
+   "agregation": "oui",
+   "source": {
+    "2024": "E529",
+    "*": "C106>0"
+   },
+   "note": "2024 : réponse à la question « accès internet dans la bibliothèque » ; à partir de 2025 : au moins un poste public relié à internet."
+  },
+  "etp_salaries": {
+   "libelle": "ETP salariés",
+   "agregation": "somme",
+   "source": {
+    "*": "G102"
+   },
+   "decimales": 1
+  },
+  "fonds_propre": {
+   "libelle": "Documents en fonds propre (livres, sonores, vidéo)",
+   "agregation": "somme",
+   "source": {
+    "*": "D128+D409+D411"
+   }
+  },
+  "fonds_bdp": {
+   "libelle": "Documents en dépôt de biblio.gironde",
+   "agregation": "somme",
+   "source": {
+    "*": "D143+D447+D448"
+   }
+  }
+ },
+ "pages": [
+  {
+   "id": "general",
+   "titre": "Général",
+   "tuiles": [
+    "population",
+    "heures_hebdo",
+    "jours_hebdo",
+    "jours_annuels",
+    "surface",
+    "taux_emprunteurs",
+    "dimanche",
+    "accessible",
+    "gratuite"
+   ],
+   "carte": true,
+   "repartition": "typologie",
+   "graphique": [
+    "heures_hebdo",
+    "surface"
+   ],
+   "tableau": [
+    "population",
+    "surface",
+    "surface_reco",
+    "heures_hebdo",
+    "jours_hebdo",
+    "taux_emprunteurs"
+   ]
+  },
+  {
+   "id": "sigb",
+   "titre": "SIGB",
+   "tuiles": [
+    "catalogue_informatise",
+    "dep_informatique"
+   ],
+   "repartition": "sigb",
+   "graphique": [
+    "dep_informatique"
+   ],
+   "tableau": [
+    "catalogue_informatise",
+    "sigb",
+    "dep_informatique"
+   ]
+  },
+  {
+   "id": "numerique",
+   "titre": "Services numériques",
+   "tuiles": [
+    "postes_publics",
+    "postes_pro",
+    "tablettes",
+    "liseuses",
+    "consoles",
+    "wifi",
+    "reseaux_sociaux",
+    "site_internet"
+   ],
+   "graphique": [
+    "postes_publics",
+    "tablettes",
+    "liseuses"
+   ],
+   "tableau": [
+    "postes_publics",
+    "postes_pro",
+    "tablettes",
+    "liseuses",
+    "consoles",
+    "wifi"
+   ]
+  },
+  {
+   "id": "rh1",
+   "titre": "Personnel",
+   "tuiles": [
+    "personnel_total",
+    "salaries",
+    "benevoles",
+    "benevoles_qualifies",
+    "etp_total",
+    "formation_jours",
+    "formation_participants"
+   ],
+   "graphique": [
+    "salaries",
+    "benevoles"
+   ],
+   "tableau": [
+    "personnel_total",
+    "salaries",
+    "benevoles",
+    "etp_total",
+    "formation_jours"
+   ]
+  },
+  {
+   "id": "rh2",
+   "titre": "Personnel par catégorie",
+   "tuiles": [
+    "conservateurs",
+    "etp_conservateurs",
+    "bibliothecaires",
+    "etp_bibliothecaires",
+    "assistants",
+    "etp_assistants",
+    "adjoints",
+    "etp_adjoints",
+    "fpt_a",
+    "etp_fpt_a",
+    "fpt_b",
+    "etp_fpt_b",
+    "fpt_c",
+    "etp_fpt_c",
+    "non_titulaires",
+    "etp_non_titulaires",
+    "benevoles",
+    "etp_benevoles",
+    "etp_benevoles_qualifies"
+   ],
+   "graphique": [
+    "etp_conservateurs",
+    "etp_bibliothecaires",
+    "etp_assistants",
+    "etp_adjoints"
+   ],
+   "tableau": [
+    "etp_total",
+    "etp_bibliothecaires",
+    "etp_assistants",
+    "etp_adjoints",
+    "etp_benevoles"
+   ]
+  },
+  {
+   "id": "livres",
+   "titre": "Collections : livres",
+   "tuiles": [
+    "livres_fonds",
+    "livres_fonds_adultes",
+    "livres_fonds_enfants",
+    "livres_acq_adultes",
+    "livres_acq_enfants",
+    "livres_pilons_adultes",
+    "livres_pilons_enfants",
+    "livres_reco",
+    "livres_par_hab"
+   ],
+   "graphique": [
+    "livres_fonds_adultes",
+    "livres_fonds_enfants"
+   ],
+   "tableau": [
+    "livres_fonds",
+    "livres_acq_adultes",
+    "livres_acq_enfants",
+    "livres_par_hab"
+   ]
+  },
+  {
+   "id": "cd_dvd",
+   "titre": "Collections : CD et DVD",
+   "tuiles": [
+    "cd_fonds",
+    "cd_acq",
+    "cd_pilons",
+    "dvd_fonds",
+    "dvd_acq",
+    "dvd_pilons"
+   ],
+   "graphique": [
+    "cd_fonds",
+    "dvd_fonds"
+   ],
+   "tableau": [
+    "cd_fonds",
+    "cd_acq",
+    "dvd_fonds",
+    "dvd_acq"
+   ]
+  },
+  {
+   "id": "autres_supports",
+   "titre": "Collections : presse et jeux vidéo",
+   "tuiles": [
+    "presse_abonnements",
+    "jv_fonds",
+    "jv_acq",
+    "jv_pilons"
+   ],
+   "graphique": [
+    "presse_abonnements",
+    "jv_fonds"
+   ],
+   "tableau": [
+    "presse_abonnements",
+    "jv_fonds",
+    "jv_acq"
+   ]
+  },
+  {
+   "id": "usagers",
+   "titre": "Usagers",
+   "tuiles": [
+    "emprunteurs",
+    "nouveaux_inscrits",
+    "emprunteurs_residents",
+    "frequentation",
+    "frequentation_par_emprunteur",
+    "taux_emprunteurs"
+   ],
+   "graphique": [
+    "emprunteurs",
+    "nouveaux_inscrits"
+   ],
+   "tableau": [
+    "population",
+    "emprunteurs",
+    "taux_emprunteurs",
+    "nouveaux_inscrits",
+    "frequentation"
+   ]
+  },
+  {
+   "id": "prets_livres",
+   "titre": "Prêts : livres et presse",
+   "tuiles": [
+    "prets_livres",
+    "prets_presse",
+    "livres_par_emprunteur"
+   ],
+   "graphique": [
+    "prets_livres",
+    "prets_presse"
+   ],
+   "tableau": [
+    "prets_livres",
+    "prets_presse",
+    "emprunteurs",
+    "livres_par_emprunteur"
+   ]
+  },
+  {
+   "id": "prets_autres",
+   "titre": "Prêts : autres documents",
+   "tuiles": [
+    "prets_sonores",
+    "prets_video",
+    "prets_autres",
+    "prets_jeux_societe",
+    "prets_jeux_video"
+   ],
+   "graphique": [
+    "prets_sonores",
+    "prets_video",
+    "prets_autres"
+   ],
+   "tableau": [
+    "prets_sonores",
+    "prets_video",
+    "prets_autres"
+   ]
+  },
+  {
+   "id": "depenses",
+   "titre": "Dépenses",
+   "tuiles": [
+    "dep_investissement",
+    "dep_personnel",
+    "dep_action_culturelle",
+    "dep_informatique",
+    "dep_equipement",
+    "dep_communication"
+   ],
+   "graphique": [
+    "dep_action_culturelle",
+    "dep_informatique",
+    "dep_equipement",
+    "dep_communication"
+   ],
+   "tableau": [
+    "dep_investissement",
+    "dep_personnel",
+    "dep_action_culturelle",
+    "dep_informatique"
+   ]
+  },
+  {
+   "id": "depenses_doc",
+   "titre": "Dépenses documentaires",
+   "tuiles": [
+    "acq_total",
+    "acq_par_hab",
+    "acq_livres",
+    "acq_presse",
+    "acq_sonores",
+    "acq_dvd",
+    "acq_jv",
+    "acq_autres",
+    "acq_numerique"
+   ],
+   "graphique": [
+    "acq_livres",
+    "acq_presse",
+    "acq_dvd",
+    "acq_numerique"
+   ],
+   "tableau": [
+    "acq_total",
+    "acq_par_hab",
+    "acq_livres",
+    "acq_numerique"
+   ]
+  },
+  {
+   "id": "ressources",
+   "titre": "Ressources et subventions",
+   "tuiles": [
+    "subventions",
+    "ressources_privees",
+    "recettes_propres",
+    "droits_inscription",
+    "droits_usage"
+   ],
+   "graphique": [
+    "subventions",
+    "recettes_propres",
+    "ressources_privees"
+   ],
+   "tableau": [
+    "subventions",
+    "recettes_propres",
+    "droits_inscription",
+    "ressources_privees"
+   ]
+  },
+  {
+   "id": "action_culturelle",
+   "titre": "Action culturelle",
+   "tuiles": [
+    "expo_public",
+    "conferences_public",
+    "concerts_public",
+    "contes_public",
+    "clubs_public",
+    "fetes_public",
+    "autres_public"
+   ],
+   "graphique": [
+    "conferences_public",
+    "contes_public",
+    "concerts_public"
+   ],
+   "tableau": [
+    "expo",
+    "conferences",
+    "concerts",
+    "contes",
+    "clubs",
+    "fetes",
+    "autres_animations"
+   ]
+  },
+  {
+   "id": "hors_murs",
+   "titre": "Hors les murs et coopération",
+   "tuiles": [
+    "hors_murs_actions",
+    "hors_murs_public",
+    "portage_actions",
+    "portage_public",
+    "coop_locale",
+    "coop_catalogue",
+    "coop_navette",
+    "coop_carte"
+   ],
+   "graphique": [
+    "hors_murs_actions",
+    "portage_actions"
+   ],
+   "tableau": [
+    "hors_murs",
+    "portage",
+    "coop_locale",
+    "coop_catalogue",
+    "coop_portail",
+    "coop_politique_doc",
+    "coop_navette",
+    "coop_carte",
+    "coop_action_culturelle"
+   ]
+  },
+  {
+   "id": "scolaires",
+   "titre": "Partenariats scolaires",
+   "tuiles": [
+    "ecoles_classes",
+    "ecoles_accueils",
+    "ecoles_public",
+    "colleges_classes",
+    "colleges_accueils",
+    "colleges_public",
+    "lycees_classes",
+    "lycees_accueils",
+    "lycees_public",
+    "superieur_public"
+   ],
+   "graphique": [
+    "ecoles_public",
+    "colleges_public",
+    "lycees_public"
+   ],
+   "tableau": [
+    "ecoles",
+    "ecoles_classes",
+    "ecoles_accueils",
+    "ecoles_public",
+    "colleges",
+    "lycees",
+    "superieur"
+   ]
+  },
+  {
+   "id": "cartographies",
+   "titre": "Cartographies",
+   "type": "cartes",
+   "tuiles": []
+  }
+ ],
+ "cartographies": {
+  "series": [
+   {
+    "id": "communes",
+    "libelle": "Par commune",
+    "note": "Valeurs calculées pour chaque commune, sur sa population. Communes en blanc : pas de lieu de lecture."
+   },
+   {
+    "id": "epci_desservie",
+    "libelle": "Par intercommunalité : population desservie",
+    "note": "Cartes intercommunales série A : basées sur la population des communes de l'intercommunalité ayant une bibliothèque (population desservie). Communes en blanc : pas de lieu de lecture."
+   },
+   {
+    "id": "epci_totale",
+    "libelle": "Par intercommunalité : population totale",
+    "note": "Cartes intercommunales série B : basées sur la population totale de l'intercommunalité (population à desservir)."
+   }
+  ],
+  "couleurs": {
+   "nc": "#b4b4b4",
+   "sans_bibliotheque": "#ffffff"
+  },
+  "cartes": [
+   {
+    "id": "c-gratuite",
+    "serie": "communes",
+    "titre": "Gratuité d'adhésion à la bibliothèque",
+    "legende": "Gratuité de la bibliothèque",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "gratuite"
+    },
+    "categories": {
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#c6efc6"
+     },
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#d9b8f0"
+     }
+    }
+   },
+   {
+    "id": "c-internet",
+    "serie": "communes",
+    "titre": "Point d'accès public à internet",
+    "legende": "Accès internet dans la bibliothèque",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "internet_public"
+    },
+    "categories": {
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#c8f0a0"
+     },
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#d0b8f0"
+     }
+    }
+   },
+   {
+    "id": "c-heures",
+    "serie": "communes",
+    "titre": "Nombre d'heures d'ouverture",
+    "legende": "Heures d'ouverture hebdomadaires",
+    "calcul": {
+     "type": "valeur",
+     "indicateur": "heures_hebdo"
+    },
+    "classes": [
+     {
+      "max": 4,
+      "libelle": "moins de 4 h",
+      "couleur": "#dcf5c0"
+     },
+     {
+      "max": 10,
+      "libelle": "de 4 h à 10 h",
+      "couleur": "#b5c42a"
+     },
+     {
+      "max": 15,
+      "libelle": "de 10 h à 15 h",
+      "couleur": "#43b649"
+     },
+     {
+      "max": 20,
+      "libelle": "de 15 h à 20 h",
+      "couleur": "#237a3f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 h",
+      "couleur": "#0b3a0b"
+     }
+    ]
+   },
+   {
+    "id": "c-accessibilite",
+    "serie": "communes",
+    "titre": "Accessibilité aux personnes à mobilité réduite",
+    "legende": "Bibliothèque accessible aux personnes à mobilité réduite",
+    "calcul": {
+     "type": "oui",
+     "indicateur": "accessible"
+    },
+    "categories": {
+     "Non": {
+      "libelle": "Non",
+      "couleur": "#f08a8a"
+     },
+     "Oui": {
+      "libelle": "Oui",
+      "couleur": "#b8e886"
+     }
+    }
+   },
+   {
+    "id": "c-emprunteurs",
+    "serie": "communes",
+    "titre": "Emprunteurs actifs",
+    "legende": "% d'emprunteurs actifs (sur la population de la commune)",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 5,
+      "libelle": "moins de 5 %",
+      "couleur": "#e3f7f7"
+     },
+     {
+      "max": 10,
+      "libelle": "entre 5 et 10 %",
+      "couleur": "#5ff0f5"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#45e6c0"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#237a6a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#0b3a32"
+     }
+    ]
+   },
+   {
+    "id": "c-surface",
+    "serie": "communes",
+    "titre": "Surface en m² de la bibliothèque pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#c9dff2"
+     },
+     {
+      "max": 5,
+      "libelle": "entre 3 et 5 m²",
+      "couleur": "#4fc3f0"
+     },
+     {
+      "max": 7,
+      "libelle": "entre 5 et 7 m²",
+      "couleur": "#2f7fe0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#0c2a6a"
+     }
+    ]
+   },
+   {
+    "id": "a-emprunteurs",
+    "serie": "epci_desservie",
+    "titre": "% d'emprunteurs actifs",
+    "legende": "% d'emprunteurs",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#dde8fb"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#b9cdf5"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#3a7fef"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#0a3a8f"
+     }
+    ]
+   },
+   {
+    "id": "a-surface",
+    "serie": "epci_desservie",
+    "titre": "Surface en m² pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#eef9e8"
+     },
+     {
+      "max": 5,
+      "libelle": "de 3 à 5 m²",
+      "couleur": "#c8f5c0"
+     },
+     {
+      "max": 7,
+      "libelle": "de 5 à 7 m²",
+      "couleur": "#2fa02f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#0b4a3f"
+     }
+    ]
+   },
+   {
+    "id": "a-benevoles",
+    "serie": "epci_desservie",
+    "titre": "Bénévoles pour 1 000 habitants",
+    "legende": "Bénévoles pour 1 000 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "benevoles",
+     "facteur": 1000
+    },
+    "classes": [
+     {
+      "max": 2,
+      "libelle": "moins de 2 bénévoles",
+      "couleur": "#a8ecd8"
+     },
+     {
+      "max": 4,
+      "libelle": "de 2 à 4 bénévoles",
+      "couleur": "#2ecf9f"
+     },
+     {
+      "max": 7,
+      "libelle": "de 4 à 7 bénévoles",
+      "couleur": "#0f7a5a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 bénévoles",
+      "couleur": "#0a4a36"
+     }
+    ]
+   },
+   {
+    "id": "a-etp",
+    "serie": "epci_desservie",
+    "titre": "Équivalent temps plein salariés",
+    "legende": "Habitants pour 1 ETP salarié",
+    "calcul": {
+     "type": "habitants_par",
+     "indicateur": "etp_salaries"
+    },
+    "classes": [
+     {
+      "max": 2000,
+      "libelle": "1 ETP pour moins de 2 000 habitants",
+      "couleur": "#0b4a3f"
+     },
+     {
+      "max": 3500,
+      "libelle": "1 ETP pour 2 000 à 3 500 habitants",
+      "couleur": "#1f8f7a"
+     },
+     {
+      "max": 5000,
+      "libelle": "1 ETP pour 3 500 à 5 000 habitants",
+      "couleur": "#40e0c0"
+     },
+     {
+      "max": null,
+      "libelle": "1 ETP pour plus de 5 000 habitants",
+      "couleur": "#d8f8c0"
+     }
+    ]
+   },
+   {
+    "id": "a-acquisition",
+    "serie": "epci_desservie",
+    "titre": "Budget d'acquisition par habitant",
+    "legende": "Budget d'acquisition par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "acq_total",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 €",
+      "couleur": "#9ff0e0"
+     },
+     {
+      "max": 1.5,
+      "libelle": "de 1 € à 1,50 €",
+      "couleur": "#2fd8f0"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1,50 € à 2 €",
+      "couleur": "#10a0e0"
+     },
+     {
+      "max": 2.5,
+      "libelle": "de 2 € à 2,50 €",
+      "couleur": "#1030e0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 2,50 €",
+      "couleur": "#0a1f4a"
+     }
+    ]
+   },
+   {
+    "id": "a-fonds-propre",
+    "serie": "epci_desservie",
+    "titre": "Nombre de documents en fonds propre par habitant",
+    "legende": "Documents en fonds propre par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "fonds_propre",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 document",
+      "couleur": "#eefbe8"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1 à 2 documents",
+      "couleur": "#c0f5c0"
+     },
+     {
+      "max": 3,
+      "libelle": "de 2 à 3 documents",
+      "couleur": "#3aa83a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 3 documents",
+      "couleur": "#0b4a0b"
+     }
+    ]
+   },
+   {
+    "id": "a-fonds-bg",
+    "serie": "epci_desservie",
+    "titre": "Part du fonds biblio.gironde sur le fonds total",
+    "legende": "Part du fonds biblio.gironde",
+    "calcul": {
+     "type": "part",
+     "numerateur": "fonds_bdp",
+     "denominateur": [
+      "fonds_propre",
+      "fonds_bdp"
+     ],
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#b8d0f5"
+     },
+     {
+      "max": 20,
+      "libelle": "de 10 à 20 %",
+      "couleur": "#3a7fe0"
+     },
+     {
+      "max": 30,
+      "libelle": "de 20 à 30 %",
+      "couleur": "#0a3a8f"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 30 %",
+      "couleur": "#061f50"
+     }
+    ]
+   },
+   {
+    "id": "a-action-culturelle",
+    "serie": "epci_desservie",
+    "titre": "Budget d'action culturelle par habitant",
+    "legende": "Budget d'action culturelle par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "dep_action_culturelle",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 0.2,
+      "libelle": "moins de 0,20 €",
+      "couleur": "#8fd8d0"
+     },
+     {
+      "max": 0.4,
+      "libelle": "de 0,20 € à 0,40 €",
+      "couleur": "#20e0f8"
+     },
+     {
+      "max": 0.6,
+      "libelle": "de 0,40 € à 0,60 €",
+      "couleur": "#1890f0"
+     },
+     {
+      "max": 1,
+      "libelle": "de 0,60 € à 1 €",
+      "couleur": "#105a90"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 1 €",
+      "couleur": "#0b2a40"
+     }
+    ]
+   },
+   {
+    "id": "b-emprunteurs",
+    "serie": "epci_totale",
+    "titre": "% d'emprunteurs actifs",
+    "legende": "% d'emprunteurs",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "emprunteurs",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#e8f7ef"
+     },
+     {
+      "max": 15,
+      "libelle": "entre 10 et 15 %",
+      "couleur": "#50c0a8"
+     },
+     {
+      "max": 20,
+      "libelle": "entre 15 et 20 %",
+      "couleur": "#3a7aa8"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 20 %",
+      "couleur": "#3a3570"
+     }
+    ]
+   },
+   {
+    "id": "b-surface",
+    "serie": "epci_totale",
+    "titre": "Surface en m² pour 100 habitants",
+    "legende": "Surface pour 100 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "surface",
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 3,
+      "libelle": "moins de 3 m²",
+      "couleur": "#fff6c8"
+     },
+     {
+      "max": 5,
+      "libelle": "de 3 à 5 m²",
+      "couleur": "#80d0b8"
+     },
+     {
+      "max": 7,
+      "libelle": "de 5 à 7 m²",
+      "couleur": "#3a90c0"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 m²",
+      "couleur": "#283a90"
+     }
+    ]
+   },
+   {
+    "id": "b-benevoles",
+    "serie": "epci_totale",
+    "titre": "Bénévoles pour 1 000 habitants",
+    "legende": "Bénévoles pour 1 000 habitants",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "benevoles",
+     "facteur": 1000
+    },
+    "classes": [
+     {
+      "max": 2,
+      "libelle": "moins de 2 bénévoles",
+      "couleur": "#10c0a8"
+     },
+     {
+      "max": 4,
+      "libelle": "de 2 à 4 bénévoles",
+      "couleur": "#1f7a6a"
+     },
+     {
+      "max": 7,
+      "libelle": "de 4 à 7 bénévoles",
+      "couleur": "#0f4a40"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 7 bénévoles",
+      "couleur": "#062a24"
+     }
+    ]
+   },
+   {
+    "id": "b-etp",
+    "serie": "epci_totale",
+    "titre": "Équivalent temps plein salariés",
+    "legende": "Habitants pour 1 ETP salarié",
+    "calcul": {
+     "type": "habitants_par",
+     "indicateur": "etp_salaries"
+    },
+    "classes": [
+     {
+      "max": 2000,
+      "libelle": "1 ETP pour moins de 2 000 habitants",
+      "couleur": "#283a90"
+     },
+     {
+      "max": 3500,
+      "libelle": "1 ETP pour 2 000 à 3 500 habitants",
+      "couleur": "#3a90c0"
+     },
+     {
+      "max": 5000,
+      "libelle": "1 ETP pour 3 500 à 5 000 habitants",
+      "couleur": "#80d0b8"
+     },
+     {
+      "max": null,
+      "libelle": "1 ETP pour plus de 5 000 habitants",
+      "couleur": "#fff6c8"
+     }
+    ]
+   },
+   {
+    "id": "b-acquisition",
+    "serie": "epci_totale",
+    "titre": "Budget d'acquisition par habitant",
+    "legende": "Budget d'acquisition par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "acq_total",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 €",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 1.5,
+      "libelle": "de 1 € à 1,50 €",
+      "couleur": "#50c0b0"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1,50 € à 2 €",
+      "couleur": "#4a88b0"
+     },
+     {
+      "max": 2.5,
+      "libelle": "de 2 € à 2,50 €",
+      "couleur": "#3a3570"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 2,50 €",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   },
+   {
+    "id": "b-fonds-propre",
+    "serie": "epci_totale",
+    "titre": "Nombre de documents en fonds propre par habitant",
+    "legende": "Documents en fonds propre par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "fonds_propre",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 1,
+      "libelle": "moins de 1 document",
+      "couleur": "#f0f8ff"
+     },
+     {
+      "max": 2,
+      "libelle": "de 1 à 2 documents",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 3,
+      "libelle": "de 2 à 3 documents",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 3 documents",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   },
+   {
+    "id": "b-fonds-bg",
+    "serie": "epci_totale",
+    "titre": "Part du fonds biblio.gironde sur le fonds total",
+    "legende": "Part du fonds biblio.gironde",
+    "calcul": {
+     "type": "part",
+     "numerateur": "fonds_bdp",
+     "denominateur": [
+      "fonds_propre",
+      "fonds_bdp"
+     ],
+     "facteur": 100
+    },
+    "classes": [
+     {
+      "max": 10,
+      "libelle": "moins de 10 %",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 20,
+      "libelle": "de 10 à 20 %",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": 30,
+      "libelle": "de 20 à 30 %",
+      "couleur": "#0a0a0a"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 30 %",
+      "couleur": "#000000"
+     }
+    ]
+   },
+   {
+    "id": "b-action-culturelle",
+    "serie": "epci_totale",
+    "titre": "Budget d'action culturelle par habitant",
+    "legende": "Budget d'action culturelle par habitant",
+    "calcul": {
+     "type": "ratio",
+     "numerateur": "dep_action_culturelle",
+     "facteur": 1
+    },
+    "classes": [
+     {
+      "max": 0.2,
+      "libelle": "moins de 0,20 €",
+      "couleur": "#e0f5ea"
+     },
+     {
+      "max": 0.4,
+      "libelle": "de 0,20 € à 0,40 €",
+      "couleur": "#50c0b0"
+     },
+     {
+      "max": 0.6,
+      "libelle": "de 0,40 € à 0,60 €",
+      "couleur": "#3a78a8"
+     },
+     {
+      "max": 1,
+      "libelle": "de 0,60 € à 1 €",
+      "couleur": "#3a3570"
+     },
+     {
+      "max": null,
+      "libelle": "plus de 1 €",
+      "couleur": "#0a0a0a"
+     }
+    ]
+   }
   ]
+ }
 }
