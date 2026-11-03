@@ -39,5 +39,14 @@ for (const [id, attendu] of Object.entries(LOOKER_2024)) {
   if (Math.abs(total - attendu) < 0.01) ok++;
   else ecarts.push(`  ${id} : ${total} au lieu de ${attendu}`);
 }
-console.log(`${ok}/${Object.keys(LOOKER_2024).length} indicateurs identiques au Looker 2024.`);
+// Répartition des SIGB (camembert de la page SIGB du Looker, année 2024)
+const SIGB_LOOKER_2024 = { Decalog: 72, Orphée: 45, Syracuse: 19, 'AFI Nanook': 16, WaterBear: 15, PMB: 14, Microbib: 13, BGM: 11, Cassiopée: 10, 'InMédia / PortFolio': 7 };
+const sigb = {};
+for (const e of lignes) if (e.v.sigb) sigb[e.v.sigb] = (sigb[e.v.sigb] ?? 0) + 1;
+for (const [nom, attendu] of Object.entries(SIGB_LOOKER_2024)) {
+  if ((sigb[nom] ?? 0) === attendu) ok++;
+  else ecarts.push(`  SIGB ${nom} : ${sigb[nom] ?? 0} au lieu de ${attendu}`);
+}
+const nbControles = Object.keys(LOOKER_2024).length + Object.keys(SIGB_LOOKER_2024).length;
+console.log(`${ok}/${nbControles} indicateurs identiques au Looker 2024.`);
 if (ecarts.length) { console.log('Écarts :\n' + ecarts.join('\n')); process.exit(1); }

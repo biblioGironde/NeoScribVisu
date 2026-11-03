@@ -88,13 +88,12 @@ export function familleSigb(v) {
     [/\bbgm\b/, 'BGM'],
     [/nanook|\bafi\b/, 'AFI Nanook'],
     [/syracuse/, 'Syracuse'],
-    [/novalys|microbib/, 'Microbib (Novalys)'],
+    // Regroupement repris du Looker de Blandine : Novalys, Sapentia et Oxalys comptés avec Microbib.
+    [/novalys|microbib|sapentia|oxalys/, 'Microbib'],
     [/portfolio|inm[ée]dia/, 'InMédia / PortFolio'],
-    [/sapentia/, 'Sapentia'],
     [/cassiop/, 'Cassiopée'],
     [/colibris/, 'CoLibris'],
     [/karvi/, 'Karvi'],
-    [/oxalys/, 'Oxalys'],
     [/v-?smart/, 'V-smart'],
   ];
   for (const [re, nom] of regles) if (re.test(s)) return nom;

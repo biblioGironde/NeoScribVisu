@@ -433,7 +433,7 @@ const NOTES_GENERALES = [
 function notesPour(pages) {
   const notes = [...NOTES_GENERALES];
   for (const page of pages) {
-    for (const id of [...page.tuiles, ...(page.graphique ?? [])]) {
+    for (const id of [...page.tuiles, ...(page.graphique ?? []), ...(meta.indicateurs[page.repartition] ? [page.repartition] : [])]) {
       const ind = meta.indicateurs[id];
       if (ind.note && !notes.includes(`${ind.libelle} : ${ind.note}`)) notes.push(`${ind.libelle} : ${ind.note}`);
     }

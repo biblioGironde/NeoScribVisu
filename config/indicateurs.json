@@ -19,7 +19,7 @@
     "taux_emprunteurs": { "libelle": "Emprunteurs actifs pour 100 habitants", "agregation": "ratio", "numerateur": "emprunteurs", "denominateur": "population", "facteur": 100, "decimales": 1 },
 
     "catalogue_informatise": { "libelle": "Catalogue informatisé", "agregation": "oui", "source": { "*": "C201" } },
-    "sigb": { "libelle": "SIGB utilisé", "agregation": "categorie", "source": { "*": "C206" } },
+    "sigb": { "libelle": "SIGB utilisé", "agregation": "categorie", "source": { "*": "C206" }, "note": "Les lieux d'une bibliothèque intercommunale reprennent le SIGB déclaré par leur réseau. Novalys, Sapentia et Oxalys sont comptés avec Microbib, comme dans le Looker." },
     "dep_informatique": { "libelle": "Dépenses informatiques (fonctionnement)", "agregation": "somme", "source": { "*": "F504" }, "unite": "€" },
 
     "postes_publics": { "libelle": "Postes publics avec internet", "agregation": "somme", "source": { "*": "C106" } },

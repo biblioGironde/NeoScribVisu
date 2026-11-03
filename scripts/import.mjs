@@ -141,6 +141,22 @@ for (const annee of annees) {
     };
   });
 
+  // SIGB des bibliothèques intercommunales : il n'est déclaré que sur la ligne du réseau (UC).
+  // Comme dans le Looker, les lieux rattachés à l'EPCI qui n'ont pas de SIGB reprennent celui du réseau
+  // de leur intercommunalité, quand ce réseau est unique ou que tous ses réseaux ont le même SIGB.
+  const sigbReseau = new Map();
+  for (const r of etablissements.filter((e) => e.type === 'reseau' && e.v.sigb && e.epci)) {
+    const deja = sigbReseau.get(r.epci);
+    sigbReseau.set(r.epci, deja === undefined || deja === r.v.sigb ? r.v.sigb : null);
+  }
+  let herites = 0;
+  for (const e of etablissements) {
+    if (e.type !== 'lieu' || e.v.sigb || e.rattachement !== 'EPCI' || !sigbReseau.get(e.epci)) continue;
+    e.v.sigb = sigbReseau.get(e.epci);
+    e.sigb_herite = true;
+    herites++;
+  }
+
   fs.writeFileSync(path.join(DOSSIER_SORTIE, `${annee}.json`), JSON.stringify({ annee: Number(annee), etablissements }));
 
   // ------------------------------------------------------------ rapport de l'année
@@ -153,6 +169,7 @@ for (const annee of annees) {
     `- Annuaire : ${exports.annuaire[0] ? `\`${exports.annuaire[0].fichier}\`` : '**absent** (pas de carte)'}`,
     `- Typologie : ${exports.typologie[0] ? `\`${exports.typologie[0].fichier}\`` : 'absente'}`,
     `- Avancement : ${Object.entries(avancement).map(([k, n]) => `${k} ${n}`).join(', ')}`,
+    `- SIGB repris du réseau intercommunal pour ${herites} lieux sans SIGB déclaré`,
     `- Indicateurs non disponibles cette année : ${Object.entries(disponibilite).filter(([, d]) => d[annee] === false).map(([id]) => `\`${id}\``).join(', ') || 'aucun'}`,
   );
   if (manquants.length) log('', `> ⚠️ Codes prévus dans la configuration mais absents de l'export : ${manquants.join(', ')}. Corrigez \`config/indicateurs.json\`.`);

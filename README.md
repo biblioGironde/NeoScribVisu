@@ -83,7 +83,7 @@ Les pages sont décrites dans le même fichier (`pages` : tuiles, graphiques par
 
 ## Vérification
 
-`npm run verifier` recalcule 90 totaux 2024 et les compare aux valeurs relevées dans le Looker d'origine le 03/11/2026 (filtre année 2024, toute la Gironde). Tous doivent être identiques.
+`npm run verifier` recalcule 90 totaux 2024 et la répartition des 10 principaux SIGB, et les compare aux valeurs relevées dans le Looker d'origine le 03/11/2026 (filtre année 2024, toute la Gironde). Tous doivent être identiques.
 
 ## Licence
 
