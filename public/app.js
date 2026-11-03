@@ -445,14 +445,98 @@ const legendeCarte = (points, lignes) => ['A', 'B', 'C', 'D', 'E'].map((t) => `<
   + `<span>${nf().format(points.length)} lieux localisés sur ${nf().format(lignes.filter((e) => e.type === 'lieu').length)}</span>`;
 
 /** Dessine les lieux de lecture sur une carte Leaflet. Renvoie la couche de fond (pour attendre son chargement). */
-function dessinerCarte(conteneur, lignes, options = {}) {
-  const m = L.map(conteneur, { scrollWheelZoom: false, zoomControl: !options.statique, attributionControl: true, ...(options.statique ? { dragging: false, zoomAnimation: false, fadeAnimation: false, zoomSnap: 0.25 } : {}) });
-  const fond = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© contributeurs OpenStreetMap' }).addTo(m);
-  const couche = L.layerGroup().addTo(m);
-  return { carte: m, fond, couche };
+// Fonds de carte : plan OpenStreetMap, ou découpage communal (contours ADEME, fichier généré par npm run contours).
+const FONDS = { plan: 'Plan (OpenStreetMap)', communes: 'Découpage communal' };
+const URL_COMMUNES = 'data/communes-33.geojson';
+let promesseCommunes;
+const chargerCommunes = () => (promesseCommunes ??= fetch(URL_COMMUNES)
+  .then((r) => { if (!r.ok) throw new Error(`fichier des contours introuvable (${r.status})`); return r.json(); })
+  .catch((err) => { promesseCommunes = null; throw err; }));
+
+function fondMemorise() {
+  try { return FONDS[localStorage.getItem('neoscribvisu-fond')] ? localStorage.getItem('neoscribvisu-fond') : 'plan'; } catch { return 'plan'; }
 }
+
+function dessinerCarte(conteneur, options = {}) {
+  const m = L.map(conteneur, { scrollWheelZoom: false, zoomControl: !options.statique, attributionControl: true, ...(options.statique ? { dragging: false, zoomAnimation: false, fadeAnimation: false, zoomSnap: 0.25 } : {}) });
+  m.createPane('communes').style.zIndex = 350; // sous les points (overlayPane = 400)
+  const c = { carte: m, couche: L.layerGroup().addTo(m), communesSelection: new Set(), communeChoisie: '', epciChoisi: '' };
+  c.plan = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© contributeurs OpenStreetMap' });
+  c.communes = L.geoJSON(null, {
+    pane: 'communes',
+    attribution: 'Contours des communes : ADEME',
+    style: (f) => styleCommune(c, f),
+    onEachFeature: (f, couche) => {
+      couche.bindTooltip(f.properties.nom, { sticky: true, direction: 'top' });
+      // Un clic sur une commune qui a un lieu de lecture ouvre sa fiche.
+      if (!options.statique) couche.on('click', () => {
+        if (!donnees[etat.annee].some((e) => e.insee === f.properties.code)) return;
+        etat.epci = '';
+        etat.commune = f.properties.code;
+        afficher();
+      });
+    },
+  });
+  if (!options.statique) {
+    L.control.layers({ [FONDS.plan]: c.plan, [FONDS.communes]: c.communes }, null, { collapsed: false, position: 'topright' }).addTo(m);
+    m.on('baselayerchange', (ev) => {
+      const fond = ev.layer === c.communes ? 'communes' : 'plan';
+      try { localStorage.setItem('neoscribvisu-fond', fond); } catch { /* stockage indisponible */ }
+      if (fond === 'communes') remplirCommunes(c);
+    });
+  }
+  return c;
+}
+
+/** Commune en gris clair ; teintée si elle a un lieu de lecture dans la sélection ; contour accentué si choisie. */
+function styleCommune(c, f) {
+  const code = f.properties.code;
+  const horsPerimetre = c.epciChoisi && f.properties.codeEpci !== c.epciChoisi;
+  const choisie = code === c.communeChoisie;
+  const dansEpci = c.epciChoisi && !horsPerimetre;
+  return {
+    color: choisie ? '#8c2f4b' : dansEpci ? '#3f4d55' : '#7d8a92',
+    weight: choisie ? 2.5 : dansEpci ? 1.1 : 0.7,
+    fillColor: c.communesSelection.has(code) ? '#cfe3e1' : '#ffffff',
+    fillOpacity: horsPerimetre ? 0.35 : 1,
+    opacity: horsPerimetre ? 0.35 : 1,
+  };
+}
+
+/** Charge les contours si besoin et les affiche. */
+async function remplirCommunes(c) {
+  if (c.communes.getLayers().length) return;
+  const statut = (t) => { if (c.statut) c.statut.textContent = t; };
+  statut('Chargement du découpage communal…');
+  try {
+    c.communes.addData(await chargerCommunes());
+    c.communes.setStyle((f) => styleCommune(c, f));
+    statut('');
+  } catch (err) {
+    statut(`Le découpage communal n'a pas pu être chargé (${err.message}). Le plan OpenStreetMap est affiché à la place.`);
+    throw err;
+  }
+}
+
+/** Affiche le fond demandé ; renvoie une promesse résolue quand il est chargé (pour l'impression). */
+function choisirFond(c, fond) {
+  const autre = fond === 'communes' ? c.plan : c.communes;
+  const actif = fond === 'communes' ? c.communes : c.plan;
+  if (c.carte.hasLayer(autre)) c.carte.removeLayer(autre);
+  if (!c.carte.hasLayer(actif)) actif.addTo(c.carte);
+  if (fond === 'communes') return remplirCommunes(c).catch(() => choisirFond(c, 'plan'));
+  return new Promise((resoudre) => {
+    if (!c.plan.isLoading?.()) setTimeout(resoudre, 300);
+    c.plan.once('load', resoudre);
+  });
+}
+
 function placerPoints(c, lignes, couleurs) {
   c.couche.clearLayers();
+  c.communesSelection = new Set(lignes.map((e) => e.insee).filter(Boolean));
+  c.communeChoisie = etat.commune;
+  c.epciChoisi = etat.epci;
+  c.communes.setStyle((f) => styleCommune(c, f));
   const points = lignes.filter((e) => e.type === 'lieu' && e.lat && e.lon);
   for (const e of points) {
     L.circleMarker([e.lat, e.lon], { radius: 6, weight: 1, color: '#1e2a33', fillColor: couleurs(e.typologie), fillOpacity: .9 })
@@ -468,7 +552,11 @@ function afficherCarte(page, lignes) {
   const bloc = $('.bloc-carte');
   if (!page.carte || !window.L) { bloc.hidden = true; return; }
   bloc.hidden = false;
-  carte ??= dessinerCarte('carte', lignes);
+  if (!carte) {
+    carte = dessinerCarte('carte');
+    carte.statut = $('.etat-carte');
+    choisirFond(carte, fondMemorise());
+  }
   const points = placerPoints(carte, lignes, couleurTypo);
   setTimeout(() => carte.carte.invalidateSize(), 0);
   $('.legende-carte').innerHTML = legendeCarte(points, lignes);
@@ -614,12 +702,13 @@ async function genererPdf(choix) {
   // Les cartes sont dessinées hors écran à la taille de la page, puis on attend leurs tuiles.
   const instances = [];
   await Promise.all(cartes.map((id) => new Promise((resoudre) => {
-    const c = dessinerCarte(id, lignes, { statique: true });
+    const c = dessinerCarte(id, { statique: true });
     instances.push(c.carte);
     const points = placerPoints(c, lignes, (t) => COULEURS_IMPRESSION[(t ?? 'e').toLowerCase()] ?? '#888');
     $(`[data-legende="${id}"]`).innerHTML = legendeCarte(points, lignes);
+    // Même fond que celui choisi à l'écran ; on attend qu'il soit chargé (6 s au plus).
     const fin = setTimeout(resoudre, 6000);
-    c.fond.on('load', () => { clearTimeout(fin); resoudre(); });
+    choisirFond(c, fondMemorise()).then(() => { clearTimeout(fin); setTimeout(resoudre, 200); });
   })));
 
   const nettoyer = () => {

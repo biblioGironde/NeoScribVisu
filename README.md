@@ -18,6 +18,12 @@ npm run verifier   # contrôle les totaux 2024 contre le Looker d'origine
 npm start          # http://localhost:8080
 ```
 
+## Fonds de carte
+
+La carte de la page Général propose deux fonds, au choix en haut à droite : le plan OpenStreetMap et le découpage communal. Le choix est mémorisé dans le navigateur et repris dans l'export PDF. En découpage communal, les communes qui ont au moins un lieu de lecture dans la sélection sont teintées ; un clic sur l'une d'elles ouvre sa fiche.
+
+Les contours viennent du référentiel SIG « Contours des communes » de l'ADEME (data-interne.ademe.fr, mis à jour chaque année). Ils sont stockés dans `public/data/communes-33.geojson` ; pour les rafraîchir : `npm run contours`.
+
 ## Export PDF
 
 Le bouton « Exporter en PDF » ouvre une liste de choix : pages à intégrer, contenu de chaque page (chiffres clés, carte, répartitions, graphiques par territoire, tableau par établissement), page de garde et méthode. Le document est mis en page en A4 paysage avec les filtres en cours, puis la fenêtre d'impression du navigateur s'ouvre : choisir « Enregistrer au format PDF ». Les choix de contenu sont mémorisés dans le navigateur pour l'export suivant.
