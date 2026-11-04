@@ -1,8 +1,8 @@
 // Contours des communes et des intercommunalités de Gironde, pour la carte et l'onglet Cartographies.
-// Source : ADEME, référentiel SIG « Contours des communes » et « Contours des EPCI »
+// Sources : ADEME, référentiel SIG « Contours des communes » et « Contours des EPCI » ; populations INSEE via geo.api.gouv.fr
 // (portail data-interne.ademe.fr, mise à jour annuelle).
 // Usage : npm run contours                                   (télécharge depuis l'API de l'ADEME)
-//         npm run contours -- communes.geojson epci.geojson  (part de fichiers déjà téléchargés)
+//         npm run contours -- communes.geojson epci.geojson mairies.json  (part de fichiers déjà téléchargés)
 // À lancer après npm run import : la liste des intercommunalités vient de public/data/meta.json.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,13 +41,30 @@ function ecrire(nom, features, source) {
   console.log(`${features.length} contours écrits dans ${path.relative(RACINE, sortie)} (${Math.round(fs.statSync(sortie).size / 1024)} Ko).`);
 }
 
-const [fichierCommunes, fichierEpci] = process.argv.slice(2);
+const [fichierCommunes, fichierEpci, fichierMairies] = process.argv.slice(2);
+
+// Population municipale (INSEE) et position de la mairie de chaque commune, via geo.api.gouv.fr.
+// La mairie sert de point de référence de la commune pour chiffrer la couverture des isochrones
+// (le centre géométrique tombe souvent en forêt ou dans l'eau dans les grandes communes).
+const populations = new Map();
+const mairies = new Map();
+try {
+  const geoApi = fichierMairies
+    ? JSON.parse(fs.readFileSync(fichierMairies, 'utf8'))
+    : await (await fetch(`https://geo.api.gouv.fr/departements/${DEPARTEMENT}/communes?fields=code,population,mairie`)).json();
+  for (const c of geoApi) {
+    populations.set(c.code, c.population ?? null);
+    if (c.mairie?.coordinates) mairies.set(c.code, c.mairie.coordinates.map((n) => Math.round(n * 1e5) / 1e5));
+  }
+} catch (err) {
+  console.warn(`Populations et mairies non récupérées (${err.message}) : les cartes d'accessibilité n'afficheront pas de pourcentage.`);
+}
 
 const communes = await lire(fichierCommunes,
   `${API}/geo-contours-communes/lines?DDEP_C_COD_eq=${DEPARTEMENT}&format=geojson&size=1000&select=DCOE_C_COD,DCOE_L_LIB,EPCI_CODE`);
 ecrire(`communes-${DEPARTEMENT}.geojson`, communes.features.map((f) => ({
   type: 'Feature',
-  properties: { code: f.properties.DCOE_C_COD, nom: f.properties.DCOE_L_LIB, codeEpci: f.properties.EPCI_CODE },
+  properties: { code: f.properties.DCOE_C_COD, nom: f.properties.DCOE_L_LIB, codeEpci: f.properties.EPCI_CODE, population: populations.get(f.properties.DCOE_C_COD) ?? null, mairie: mairies.get(f.properties.DCOE_C_COD) ?? null },
   geometry: multiPolygone(f.geometry),
 })).sort((a, b) => a.properties.code.localeCompare(b.properties.code)), 'ADEME, référentiel SIG « Contours des communes »');
 

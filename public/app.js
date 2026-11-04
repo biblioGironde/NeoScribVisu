@@ -859,9 +859,13 @@ function preparerProjection(communes, epci) {
     }
     return { d, boite, centre: meilleur.centre };
   };
-  const tracesCommunes = communes.features.map((f) => ({ ...f.properties, ...trace(f.geometry) }));
+  // Point de référence : la mairie si elle est connue, sinon le centre géométrique.
+  const tracesCommunes = communes.features.map((f) => {
+    const t = trace(f.geometry);
+    return { ...f.properties, ...t, reference: f.properties.mairie ? px(f.properties.mairie) : t.centre };
+  });
   const tracesEpci = epci.features.map((f) => ({ ...f.properties, ...trace(f.geometry) }));
-  return { largeur, hauteur, communes: tracesCommunes, epci: tracesEpci };
+  return { largeur, hauteur, px, communes: tracesCommunes, epci: tracesEpci };
 }
 
 const seriesCartes = () => meta.cartographies?.series ?? [];
@@ -935,6 +939,7 @@ function texteValeur(carte, valeur) {
 }
 
 const disponibleCarte = (carte, annee) => {
+  if (carte.type === 'isochrone') return true;
   const c = carte.calcul;
   const ids = [c.indicateur, c.numerateur, ...(c.denominateur ?? [])].filter(Boolean);
   return ids.every((id) => disponible(id, annee));
@@ -942,6 +947,7 @@ const disponibleCarte = (carte, annee) => {
 
 /** Carte SVG complète + légende. Renvoie { svg, legende, stats }. */
 function dessinerCartographie(carte, annee, options = {}) {
+  if (carte.type === 'isochrone') return dessinerIsochrones(carte, annee, options);
   const P = geo.projection;
   const valeurs = valeursCarte(carte, annee);
   const couleurs = meta.cartographies.couleurs;
@@ -1018,7 +1024,7 @@ function afficherCartographies() {
     return;
   }
   $('.carto-carte', bloc).innerHTML = '<p class="carto-message">Chargement des contours…</p>';
-  chargerGeo().then(() => {
+  Promise.all([chargerGeo(), carte.type === 'isochrone' ? chargerIsochrones() : null]).then(() => {
     if (pageCourante().type !== 'cartes' || carteCourante()?.id !== carte.id) return;
     const r = dessinerCartographie(carte, etat.annee, { noms: f.noms.checked });
     $('.carto-carte', bloc).innerHTML = r.svg;
@@ -1026,6 +1032,121 @@ function afficherCartographies() {
   }).catch((err) => {
     $('.carto-carte', bloc).innerHTML = `<p class="carto-message">Les contours n'ont pas pu être chargés (${echapper(err.message)}).</p>`;
   });
+}
+
+// ---- cartes d'accessibilité (isochrones précalculées par npm run isochrones)
+let isochrones, promesseIsochrones;
+const tracesIso = new Map(); // "lon,lat" → { 10: { d, anneaux }, 20: … } en coordonnées de la carte
+
+function chargerIsochrones() {
+  promesseIsochrones ??= fetch(meta.cartographies.isochrones?.fichier ?? 'data/isochrones.json')
+    .then((r) => { if (!r.ok) throw new Error(`isochrones introuvables (${r.status}) : lancer npm run isochrones`); return r.json(); })
+    .then((j) => { isochrones = j; })
+    .catch((err) => { promesseIsochrones = null; throw err; });
+  return promesseIsochrones;
+}
+
+const cleIso = (e) => `${e.lon.toFixed(5)},${e.lat.toFixed(5)}`;
+
+function traceIso(cle, duree) {
+  if (!tracesIso.has(cle)) tracesIso.set(cle, {});
+  const t = tracesIso.get(cle);
+  if (!t[duree]) {
+    const P = geo.projection;
+    const anneaux = (isochrones.zones[cle]?.[duree] ?? []).flatMap((poly) => poly.map((r) => {
+      const pts = r.map(P.px);
+      const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+      return { pts, boite: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
+    }));
+    const d = anneaux.map((a) => `M${a.pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L')}Z`).join('');
+    t[duree] = { d, anneaux };
+  }
+  return t[duree];
+}
+
+/** Point dans un ensemble d'anneaux (règle pair-impair : les trous éventuels sont respectés). */
+function dansAnneaux([x, y], anneaux) {
+  let dedans = false;
+  for (const { pts, boite } of anneaux) {
+    if (x < boite[0] || x > boite[2] || y < boite[1] || y > boite[3]) continue;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) dedans = !dedans;
+    }
+  }
+  return dedans;
+}
+
+function dessinerIsochrones(carte, annee, options = {}) {
+  const P = geo.projection;
+  const conf = meta.cartographies.isochrones;
+  const coul = conf.couleurs;
+  const durees = [...(isochrones.durees ?? [10, 20])].sort((a, b) => a - b);
+  const typos = new Set(carte.typologies);
+  const lieux = (donnees[annee] ?? []).filter((e) => e.type === 'lieu' && typos.has(e.typologie) && e.lat && e.lon
+    && (!etat.reseau || String(e.reseau_bg) === etat.reseau));
+  const avecZone = lieux.filter((e) => isochrones.zones[cleIso(e)]);
+  const sansZone = lieux.length - avecZone.length;
+
+  // Zones : la plus large d'abord, la plus courte par-dessus (l'union se fait à l'affichage).
+  const calques = [...durees].reverse().map((d) =>
+    `<path d="${avecZone.map((e) => traceIso(cleIso(e), d).d).join('')}" fill="${coul[d]}" class="iso-zone"/>`).join('');
+
+  // Population couverte : communes dont le centre est dans la zone (plus courte durée qui l'atteint).
+  const cible = etat.epci && P.epci.find((e) => e.code === etat.epci);
+  const communes = P.communes.filter((c) => c.reference && (!cible || c.codeEpci === etat.epci));
+  const bandes = Object.fromEntries([...durees, 'au_dela'].map((k) => [k, { pop: 0, communes: [] }]));
+  for (const c of communes) {
+    const d = durees.find((dd) => avecZone.some((e) => {
+      const z = traceIso(cleIso(e), dd);
+      return dansAnneaux(c.reference, z.anneaux);
+    }));
+    const b = bandes[d ?? 'au_dela'];
+    b.pop += c.population ?? 0;
+    b.communes.push(c);
+  }
+  const popTotale = Object.values(bandes).reduce((a, b) => a + b.pop, 0);
+
+  // Fond communal clair, zones, contours par-dessus pour garder la lecture des limites.
+  const fond = P.communes.map((c) => `<path d="${c.d}" fill="${coul.au_dela}" class="iso-fond"/>`).join('');
+  const contours = P.communes.map((c) => `<path d="${c.d}" class="iso-commune${c.code === etat.commune ? ' choisie' : ''}${cible && c.codeEpci !== etat.epci ? ' hors' : ''}" data-commune="${c.code}" data-epci="${c.codeEpci}"><title>${echapper(c.nom)} : ${
+    (() => { const k = Object.keys(bandes).find((kk) => bandes[kk].communes.includes(c)); return k === undefined ? 'hors du territoire affiché' : k === 'au_dela' ? `plus de ${durees.at(-1)} minutes` : `moins de ${k} minutes`; })()}</title></path>`).join('');
+  const limites = P.epci.map((e) => `<path d="${e.d}" class="carto-epci"/>`).join('');
+
+  let [x0, y0, x1, y1] = [0, 0, P.largeur, P.hauteur];
+  if (cible) [x0, y0, x1, y1] = cible.boite;
+  const marge = Math.max(x1 - x0, y1 - y0) * 0.04;
+  const vb = [x0 - marge, y0 - marge, x1 - x0 + 2 * marge, y1 - y0 + 2 * marge];
+  const k = vb[2] / P.largeur;
+  const rayon = (cible ? 2.2 : 1) * 4.2 * k * (options.impression ? 1.1 : 1);
+  const points = [...avecZone].sort((a, b) => 'CBA'.indexOf(a.typologie) - 'CBA'.indexOf(b.typologie)).map((e) => {
+    const [x, y] = P.px([e.lon, e.lat]);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rayon.toFixed(2)}" fill="var(--typo-${e.typologie.toLowerCase()})" class="iso-point"><title>${echapper(e.nom)} (${echapper(e.commune)}), typologie ${e.typologie}</title></circle>`;
+  }).join('');
+  const taille = k * (options.impression ? 11 : 10);
+  const noms = options.noms === false ? '' : P.epci.filter((e) => e.centre && (!cible || e.code === cible.code)).map((e) =>
+    `<text x="${e.centre[0].toFixed(1)}" y="${e.centre[1].toFixed(1)}" font-size="${taille.toFixed(2)}" class="carto-nom">${echapper(libelleEpci(e.code))}</text>`).join('');
+
+  // Les zones sont découpées au contour du département.
+  const idClip = `gironde-${carte.id}-${options.impression ? 'imp' : 'ecran'}`;
+  const svg = `<svg viewBox="${vb.map((n) => n.toFixed(1)).join(' ')}" class="carto-svg carto-iso" role="img" aria-label="${echapper(carte.titre)}, données ${annee}">
+    <defs><clipPath id="${idClip}"><path d="${P.epci.map((e) => e.d).join('')}"/></clipPath></defs>
+    <g>${fond}</g><g clip-path="url(#${idClip})">${calques}</g><g>${contours}</g><g>${limites}</g><g>${points}</g><g class="carto-noms">${noms}</g></svg>`;
+
+  // Légende : points par typologie, zones, puis la part de la population couverte.
+  const pct = (n) => (popTotale ? `${nf(1).format((n / popTotale) * 100)} %` : '–');
+  const libelleBande = (kk, i) => (kk === 'au_dela' ? `plus de ${durees.at(-1)} minutes` : i === 0 ? `moins de ${kk} minutes` : `de ${durees[i - 1]} à ${kk} minutes`);
+  const lignesTypo = carte.typologies.map((t) => `<li><span class="iso-pastille" style="background:var(--typo-${t.toLowerCase()})"></span>Typologie ${t}<span class="carto-nb">${nf().format(avecZone.filter((e) => e.typologie === t).length)}</span></li>`).join('');
+  const lignesBandes = [...durees, 'au_dela'].map((kk, i) => `<li><span class="carto-case" style="background:${coul[kk]}"></span>${libelleBande(kk, i)}<span class="carto-nb">${pct(bandes[kk].pop)}</span></li>`).join('');
+  const barre = popTotale ? `<div class="iso-barre" role="img" aria-label="Répartition de la population">${[...durees, 'au_dela'].map((kk) =>
+    `<span style="width:${(bandes[kk].pop / popTotale) * 100}%;background:${coul[kk]}"></span>`).join('')}</div>` : '';
+  const loin = [...bandes.au_dela.communes].sort((a, b) => (b.population ?? 0) - (a.population ?? 0)).slice(0, 5).filter((c) => c.population);
+  const legende = `<p class="carto-legende-titre">Bibliothèques</p><ul class="carto-legende">${lignesTypo}</ul>
+    <p class="carto-legende-titre iso-titre-zones">${echapper(carte.legende)}</p><ul class="carto-legende">${lignesBandes}</ul>${barre}
+    <p class="carto-unite">Part de la population ${cible ? `de ${echapper(libelleEpci(etat.epci))}` : 'de la Gironde'} (${nf().format(popTotale)} habitants), selon la position de la mairie de chaque commune.</p>
+    ${loin.length ? `<p class="iso-loin-titre">Communes les plus peuplées à plus de ${durees.at(-1)} minutes</p><ul class="iso-loin">${loin.map((c) => `<li>${echapper(c.nom)}<span class="carto-nb">${nf().format(c.population)} hab.</span></li>`).join('')}</ul>` : ''}
+    ${sansZone ? `<p class="carto-unite">${sansZone} lieu(x) sans isochrone calculée : lancer npm run isochrones.</p>` : ''}`;
+  return { svg, legende };
 }
 
 function notesCartes() {
@@ -1036,6 +1157,7 @@ function notesCartes() {
     'Non communiqué : la commune ou l\'intercommunalité a au moins un lieu de lecture, mais la donnée n\'a pas été renseignée.',
     'Fonds propre : livres, documents sonores et vidéo hors dépôt de biblio.gironde. Fonds biblio.gironde : livres, documents sonores et vidéo en dépôt au 31 décembre.',
     'Contours des communes et des intercommunalités : ADEME, référentiel SIG.',
+    'Accessibilité : zones d\'où l\'on rejoint la bibliothèque en voiture en moins de 10 et de 20 minutes, calculées par l\'API Géoplateforme de l\'IGN (réseau BD TOPO, sans trafic). La part de population couverte compte la population légale (INSEE) des communes dont la mairie est dans la zone.',
     'Un filtre d\'intercommunalité recadre la carte sur ce territoire ; les filtres de typologie et de réseau limitent les lieux de lecture pris en compte.',
   ];
 }
@@ -1051,6 +1173,7 @@ function ouvrirExportCartes() {
 
 async function genererPdfCartes(ids, noms) {
   await chargerGeo();
+  if (listeCartes().some((c) => ids.includes(c.id) && c.type === 'isochrone')) await chargerIsochrones();
   const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   const territoire = etat.epci ? libelleEpci(etat.epci) : '';
   const pages = listeCartes().filter((c) => ids.includes(c.id)).map((carte) => {

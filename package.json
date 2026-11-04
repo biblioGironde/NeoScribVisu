@@ -6,7 +6,8 @@
     "import": "node scripts/import.mjs",
     "start": "node scripts/serveur.mjs",
     "verifier": "node scripts/verifier.mjs",
-    "contours": "node scripts/contours.mjs"
+    "contours": "node scripts/contours.mjs",
+    "isochrones": "node scripts/isochrones.mjs"
   },
   "license": "MIT",
   "dependencies": {

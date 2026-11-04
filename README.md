@@ -31,6 +31,10 @@ L'onglet « Cartographies » reprend les cartes thématiques produites jusqu'ici
 - **par commune** : gratuité, accès public à internet, heures d'ouverture, accessibilité, emprunteurs actifs, surface pour 100 habitants ;
 - **par intercommunalité, population desservie** (série A, population des communes qui ont un lieu de lecture) et **population totale** (série B) : emprunteurs, surface, bénévoles, ETP salariés, budget d'acquisition, fonds propre, part du fonds biblio.gironde, budget d'action culturelle.
 
+- **accessibilité en voiture (isochrones)** : zones à moins de 10 et de 20 minutes des bibliothèques de type A, puis de type A, B et C, avec la part de la population couverte et les communes les plus peuplées hors zone.
+
+Les isochrones sont calculées par l'API Géoplateforme de l'IGN (gratuite, sans clé) avec `npm run isochrones`, après l'import : seuls les lieux nouveaux ou déplacés sont recalculés (cache local dans `data/cache/`). La couverture de population utilise la population légale INSEE et la position de la mairie de chaque commune, récupérées par `npm run contours` (geo.api.gouv.fr).
+
 Les cartes sont dessinées en SVG à partir des contours ADEME des communes et des intercommunalités (`npm run contours`). Le filtre d'intercommunalité recadre la carte ; un clic sur une commune ouvre sa fiche. Le bouton « Exporter les cartes en PDF » produit une carte par page en A4 portrait, au choix dans une liste.
 
 Les cartes, leurs classes et leurs couleurs sont décrites dans `config/indicateurs.json`, rubrique `cartographies`.

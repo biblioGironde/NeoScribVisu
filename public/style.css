@@ -220,6 +220,24 @@ body.mode-cartes .ouvrir-export { display: none; }
   .export-colonnes-3 { grid-template-columns: 1fr; }
 }
 
+
+/* ---- Cartes d'accessibilité (isochrones) */
+.iso-fond { stroke: none; }
+.iso-zone { stroke: none; }
+.iso-commune { fill: transparent; stroke: #ffffff; stroke-opacity: .85; stroke-width: .5; vector-effect: non-scaling-stroke; cursor: pointer; }
+.iso-commune:hover { stroke: #000; stroke-opacity: 1; stroke-width: 1.5; }
+.iso-commune.choisie { stroke: #8c2f4b; stroke-width: 2.5; stroke-opacity: 1; }
+.iso-commune.hors { fill: #fff; fill-opacity: .7; }
+.carto-iso .carto-epci { stroke: #2b2440; stroke-width: 1; }
+.iso-point { stroke: #1e2a33; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.iso-pastille { width: .85rem; height: .85rem; border-radius: 50%; border: 1px solid #1e2a33; display: inline-block; justify-self: center; }
+.iso-titre-zones { margin-top: 1rem; }
+.iso-barre { display: flex; height: .7rem; margin: .7rem 0 0; border: 1px solid var(--filet); }
+.iso-barre span { display: block; height: 100%; }
+.iso-loin-titre { font-weight: 600; font-size: .85rem; margin: 1rem 0 .3rem; }
+.iso-loin { list-style: none; margin: 0; padding: 0; font-size: .85rem; display: grid; gap: .15rem; }
+.iso-loin li { display: flex; justify-content: space-between; gap: 1rem; }
+
 /* ---- Zone d'impression : hors écran à l'écran (pour que les cartes aient une taille), seule visible à l'impression */
 #impression { position: absolute; left: -12000px; top: 0; width: 273mm; }
 #impression .imp-carte { height: 92mm; }
@@ -306,6 +324,11 @@ body.mode-cartes .ouvrir-export { display: none; }
   .imp-poster .carto-legende li { font-size: 8.5pt; grid-template-columns: 7mm 1fr auto; gap: 2mm; }
   .imp-poster .carto-case { width: 7mm; height: 3.6mm; }
   .imp-poster .carto-unite { font-size: 7pt; margin-top: 1.5mm; }
+  .imp-poster .iso-pastille { width: 3.2mm; height: 3.2mm; }
+  .imp-poster .iso-titre-zones { margin-top: 2mm; }
+  .imp-poster .iso-barre { height: 2.5mm; margin-top: 1.5mm; }
+  .imp-poster .iso-loin-titre { font-size: 8pt; margin: 2mm 0 .5mm; }
+  .imp-poster .iso-loin { font-size: 7.5pt; }
   .imp-poster-mentions p { font-size: 7.5pt; color: var(--gris); margin: 0 0 1.5mm; }
   .imp-renvoi { font-size: 7.5pt; color: var(--gris); margin-top: 3mm; }
   .imp-methode ul { columns: 2; column-gap: 12mm; font-size: 9pt; padding-left: 4mm; }

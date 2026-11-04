@@ -1,4 +1,6 @@
 node_modules/
 # Exports bruts de l'enquête : ils contiennent des données nominatives, ne pas les publier.
 data/raw/
+# Cache des isochrones brutes de l'IGN (régénérable avec npm run isochrones)
+data/cache/
 rapport-import.md

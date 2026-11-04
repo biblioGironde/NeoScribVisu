@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-03T23:39:25.320Z",
+ "genere_le": "2026-11-04T06:22:36.894Z",
  "annees": [
   2024,
   2025
@@ -2104,6 +2104,11 @@
     "id": "epci_totale",
     "libelle": "Par intercommunalité : population totale",
     "note": "Cartes intercommunales série B : basées sur la population totale de l'intercommunalité (population à desservir)."
+   },
+   {
+    "id": "isochrones",
+    "libelle": "Accessibilité en voiture (isochrones)",
+    "note": "Zones d'où l'on rejoint une bibliothèque en voiture en moins de 10 et de 20 minutes (réseau routier BD TOPO de l'IGN, sans trafic). La population couverte est celle des communes dont la mairie est dans la zone (populations légales INSEE)."
    }
   ],
   "couleurs": {
@@ -2832,7 +2837,37 @@
       "couleur": "#0a0a0a"
      }
     ]
+   },
+   {
+    "id": "i-a",
+    "serie": "isochrones",
+    "type": "isochrone",
+    "titre": "Accessibilité des bibliothèques de type A",
+    "legende": "Temps de trajet en voiture vers la bibliothèque de type A la plus proche",
+    "typologies": [
+     "A"
+    ]
+   },
+   {
+    "id": "i-abc",
+    "serie": "isochrones",
+    "type": "isochrone",
+    "titre": "Accessibilité des bibliothèques de type A, B et C",
+    "legende": "Temps de trajet en voiture vers la bibliothèque de type A, B ou C la plus proche",
+    "typologies": [
+     "A",
+     "B",
+     "C"
+    ]
    }
-  ]
+  ],
+  "isochrones": {
+   "couleurs": {
+    "10": "#6f4bb3",
+    "20": "#cdbdea",
+    "au_dela": "#f3f1ec"
+   },
+   "fichier": "data/isochrones.json"
+  }
  }
 }
