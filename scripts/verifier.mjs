@@ -42,7 +42,8 @@ for (const [id, attendu] of Object.entries(LOOKER_2024)) {
 // Répartition des SIGB (camembert de la page SIGB du Looker, année 2024)
 const SIGB_LOOKER_2024 = { Decalog: 72, Orphée: 45, Syracuse: 19, 'AFI Nanook': 16, WaterBear: 15, PMB: 14, Microbib: 13, BGM: 11, Cassiopée: 10, 'InMédia / PortFolio': 7 };
 const sigb = {};
-for (const e of lignes) if (e.v.sigb) sigb[e.v.sigb] = (sigb[e.v.sigb] ?? 0) + 1;
+// Le Looker ne reportait pas le SIGB des réseaux communaux sur leurs lieux : ces lieux sont exclus de la comparaison.
+for (const e of lignes) if (e.v.sigb && e.sigb_herite !== 'commune') sigb[e.v.sigb] = (sigb[e.v.sigb] ?? 0) + 1;
 for (const [nom, attendu] of Object.entries(SIGB_LOOKER_2024)) {
   if ((sigb[nom] ?? 0) === attendu) ok++;
   else ecarts.push(`  SIGB ${nom} : ${sigb[nom] ?? 0} au lieu de ${attendu}`);

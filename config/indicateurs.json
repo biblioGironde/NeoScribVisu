@@ -98,7 +98,7 @@
    "source": {
     "*": "C206"
    },
-   "note": "Les lieux d'une bibliothèque intercommunale reprennent le SIGB déclaré par leur réseau. Novalys, Sapentia et Oxalys sont comptés avec Microbib, comme dans le Looker."
+   "note": "Les lieux sans SIGB déclaré reprennent celui de leur réseau : réseau intercommunal (comme dans le Looker) ou réseau communal (Bordeaux, Pessac, Mérignac…). Novalys, Sapentia et Oxalys sont comptés avec Microbib."
   },
   "dep_informatique": {
    "libelle": "Dépenses informatiques (fonctionnement)",

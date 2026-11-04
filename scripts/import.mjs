@@ -153,8 +153,19 @@ for (const annee of annees) {
   for (const e of etablissements) {
     if (e.type !== 'lieu' || e.v.sigb || e.rattachement !== 'EPCI' || !sigbReseau.get(e.epci)) continue;
     e.v.sigb = sigbReseau.get(e.epci);
-    e.sigb_herite = true;
+    e.sigb_herite = 'epci';
     herites++;
+  }
+  // Réseaux communaux (Bordeaux, Pessac, Mérignac…) : les lieux de la commune sans SIGB déclaré
+  // reprennent celui de la ligne réseau de leur commune. Règle ajoutée par rapport au Looker.
+  const sigbCommune = new Map();
+  for (const r of etablissements.filter((e) => e.type === 'reseau' && e.v.sigb && e.insee)) sigbCommune.set(r.insee, r.v.sigb);
+  let heritesCommune = 0;
+  for (const e of etablissements) {
+    if (e.type !== 'lieu' || e.v.sigb || !sigbCommune.get(e.insee)) continue;
+    e.v.sigb = sigbCommune.get(e.insee);
+    e.sigb_herite = 'commune';
+    heritesCommune++;
   }
 
   // Population totale de chaque intercommunalité (annuaire) : cartes intercommunales « population totale ».
@@ -176,7 +187,7 @@ for (const annee of annees) {
     `- Annuaire : ${exports.annuaire[0] ? `\`${exports.annuaire[0].fichier}\`` : '**absent** (pas de carte)'}`,
     `- Typologie : ${exports.typologie[0] ? `\`${exports.typologie[0].fichier}\`` : 'absente'}`,
     `- Avancement : ${Object.entries(avancement).map(([k, n]) => `${k} ${n}`).join(', ')}`,
-    `- SIGB repris du réseau intercommunal pour ${herites} lieux sans SIGB déclaré`,
+    `- SIGB repris du réseau pour les lieux sans SIGB déclaré : ${herites} lieux intercommunaux, ${heritesCommune} lieux de réseaux communaux`,
     `- Indicateurs non disponibles cette année : ${Object.entries(disponibilite).filter(([, d]) => d[annee] === false).map(([id]) => `\`${id}\``).join(', ') || 'aucun'}`,
   );
   if (manquants.length) log('', `> ⚠️ Codes prévus dans la configuration mais absents de l'export : ${manquants.join(', ')}. Corrigez \`config/indicateurs.json\`.`);

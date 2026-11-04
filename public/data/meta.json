@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-04T06:22:36.894Z",
+ "genere_le": "2026-11-04T08:07:30.955Z",
  "annees": [
   2024,
   2025
@@ -171,7 +171,7 @@
    "source": {
     "*": "C206"
    },
-   "note": "Les lieux d'une bibliothèque intercommunale reprennent le SIGB déclaré par leur réseau. Novalys, Sapentia et Oxalys sont comptés avec Microbib, comme dans le Looker.",
+   "note": "Les lieux sans SIGB déclaré reprennent celui de leur réseau : réseau intercommunal (comme dans le Looker) ou réseau communal (Bordeaux, Pessac, Mérignac…). Novalys, Sapentia et Oxalys sont comptés avec Microbib.",
    "disponibilite": {
     "2024": true,
     "2025": true
