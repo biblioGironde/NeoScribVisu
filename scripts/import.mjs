@@ -9,6 +9,7 @@ import {
 const DOSSIER_BRUT = path.join(RACINE, 'data', 'raw');
 const DOSSIER_SORTIE = path.join(RACINE, 'public', 'data');
 const REFERENTIEL = path.join(RACINE, 'config', 'referentiel.csv');
+const CRITERES_TYPOLOGIE = ['EMPRUNTEUR', 'NBACTIONS', 'SURFACE', 'DEP_DOC', 'PRETS', 'INTERNET', 'NHHO', 'DIVERSITE_OFFRE', 'PERSONNEL_QUAL'];
 
 const config = lireConfig();
 const indicateurs = config.indicateurs;
@@ -131,6 +132,8 @@ for (const annee of annees) {
       epci: l['Code EPCI'] || an?.['Code EPCI'] || null,
       typologie: l.Typologie2C || null,
       nouvelle_typologie: ty?.['Nouvelle typologie'] || null,
+      // Notes de 1 à 5 sur les 9 critères qui fixent la typologie (fichier typologie de l'enquête).
+      criteres: ty ? Object.fromEntries(CRITERES_TYPOLOGIE.map((c) => [c, nombre(ty[c])])) : null,
       avancement: l.Avancement || null,
       completude: nombre(String(l['Taux de complétude'] ?? '').replace('%', '')),
       lat: nombre(an?.Latitude),

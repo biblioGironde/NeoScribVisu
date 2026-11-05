@@ -1,5 +1,5 @@
 {
- "genere_le": "2026-11-04T08:07:30.955Z",
+ "genere_le": "2026-11-05T12:33:03.943Z",
  "annees": [
   2024,
   2025
@@ -1650,6 +1650,182 @@
    "agregation": "somme",
    "source": {
     "*": "D143+D447+D448"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "inscrits_actifs": {
+   "libelle": "Inscrits actifs",
+   "agregation": "somme",
+   "source": {
+    "*": "E101"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "nouveaux_residents": {
+   "libelle": "Nouveaux inscrits résidant sur le territoire",
+   "agregation": "somme",
+   "source": {
+    "*": "E141"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "nouveaux_enfants": {
+   "libelle": "Nouveaux inscrits enfants (0-14 ans)",
+   "agregation": "somme",
+   "source": {
+    "*": "E111"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "nouveaux_adultes": {
+   "libelle": "Nouveaux inscrits adultes (15-64 ans)",
+   "agregation": "somme",
+   "source": {
+    "*": "E120"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "nouveaux_seniors": {
+   "libelle": "Nouveaux inscrits adultes (65 ans et plus)",
+   "agregation": "somme",
+   "source": {
+    "*": "E129"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "nouveaux_collectivites": {
+   "libelle": "Nouveaux inscrits collectivités",
+   "agregation": "somme",
+   "source": {
+    "*": "E143"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "emprunteurs_enfants": {
+   "libelle": "Emprunteurs actifs enfants (0-14 ans)",
+   "agregation": "somme",
+   "source": {
+    "*": "E112"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "emprunteurs_adultes": {
+   "libelle": "Emprunteurs actifs adultes (15-64 ans)",
+   "agregation": "somme",
+   "source": {
+    "*": "E121"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "emprunteurs_seniors": {
+   "libelle": "Emprunteurs actifs adultes (65 ans et plus)",
+   "agregation": "somme",
+   "source": {
+    "*": "E130"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "emprunteurs_collectivites": {
+   "libelle": "Emprunteurs actifs collectivités",
+   "agregation": "somme",
+   "source": {
+    "*": "E144"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "prets_adultes": {
+   "libelle": "Prêts aux adultes",
+   "agregation": "somme",
+   "source": {
+    "*": "E237"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "prets_enfants": {
+   "libelle": "Prêts aux enfants",
+   "agregation": "somme",
+   "source": {
+    "*": "E238"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "prets_collectivites": {
+   "libelle": "Prêts aux collectivités",
+   "agregation": "somme",
+   "source": {
+    "*": "E240"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "livres_bdp": {
+   "libelle": "Livres en dépôt de biblio.gironde",
+   "agregation": "somme",
+   "source": {
+    "*": "D143"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "livres_bdp_adultes": {
+   "libelle": "Livres adultes en dépôt de biblio.gironde",
+   "agregation": "somme",
+   "source": {
+    "*": "D144"
+   },
+   "disponibilite": {
+    "2024": true,
+    "2025": true
+   }
+  },
+  "livres_bdp_enfants": {
+   "libelle": "Livres enfants en dépôt de biblio.gironde",
+   "agregation": "somme",
+   "source": {
+    "*": "D142"
    },
    "disponibilite": {
     "2024": true,
