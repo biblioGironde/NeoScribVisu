@@ -16,6 +16,7 @@ async function charger() {
   meta = await (await fetch('data/meta.json')).json();
   await Promise.all(meta.annees.map(async (a) => {
     const j = await (await fetch(`data/${a}.json`)).json();
+    marquerReseaux(j.etablissements);
     donnees[a] = j.etablissements;
     populationEpci[a] = j.population_epci ?? {};
   }));
@@ -53,16 +54,32 @@ function selection(annee) {
 
 const disponible = (id, annee) => meta.indicateurs[id]?.disponibilite?.[annee] !== false;
 
-/** Population dédoublonnée : une commune n'est comptée qu'une fois, quel que soit son nombre de lieux. */
+/** Population dédoublonnée : une commune n'est comptée qu'une fois, quel que soit son nombre de lieux.
+ *  Un réseau intercommunal (ligne « réseau » dont l'intercommunalité a des lieux rattachés à l'EPCI) porte la population
+ *  de toutes ses communes : elle remplace celle des lieux qui lui sont rattachés. Les autres lignes réseau (réseaux
+ *  communaux) sont dédoublonnées avec les lieux de leur commune ; sans lieu dans la sélection, elles comptent seules. */
 function population(lignes) {
+  const intercos = lignes.filter((e) => e.type === 'reseau' && e.intercommunal && e.v.population != null);
+  const couverts = new Set(intercos.map((r) => r.epci));
+  const lieux = lignes.filter((e) => e.type !== 'reseau' && !(e.rattachement === 'EPCI' && couverts.has(e.epci)));
+  const autres = lignes.filter((e) => e.type === 'reseau' && !e.intercommunal);
+  const base = lieux.length || intercos.length ? [...lieux, ...autres.filter((r) => lieux.some((e) => e.insee === r.insee))] : autres;
   const parCommune = new Map();
-  for (const e of lignes) {
+  for (const e of base) {
     const p = e.v.population;
     if (p == null) continue;
     const cle = e.insee ?? e.code;
     parCommune.set(cle, Math.max(parCommune.get(cle) ?? 0, p));
   }
+  for (const r of intercos) parCommune.set(`reseau:${r.code}`, r.v.population);
   return parCommune.size ? [...parCommune.values()].reduce((a, b) => a + b, 0) : null;
+}
+
+/** Repère les réseaux intercommunaux : lignes réseau dont l'intercommunalité a des lieux rattachés à l'EPCI. */
+function marquerReseaux(etablissements) {
+  for (const r of etablissements) {
+    if (r.type === 'reseau') r.intercommunal = etablissements.some((e) => e.type === 'lieu' && e.epci && e.epci === r.epci && e.rattachement === 'EPCI');
+  }
 }
 
 /** Agrège un indicateur sur un ensemble de lignes. Renvoie { valeur, n, total, categories } ou null. */
@@ -438,7 +455,7 @@ function htmlTableau(cols, lignes, tri, interactif = true) {
 
 const NOTES_GENERALES = [
   'Les sommes additionnent les lieux de lecture et, pour les communes multi-sites, la ligne « réseau » où une partie des données (personnel, budgets) est saisie.',
-  'La population n\'est comptée qu\'une fois par commune, même si la commune compte plusieurs lieux de lecture.',
+  'La population n\'est comptée qu\'une fois par commune, même si la commune compte plusieurs lieux de lecture. La population d\'un réseau intercommunal (ligne « réseau ») n\'est pas ajoutée à celle des communes de ses lieux.',
   'Les moyennes (entrées par emprunteur, livres par emprunteur, dépense par habitant) divisent des totaux, sur les seuls établissements qui renseignent les deux valeurs.',
   'Les évolutions sur un an sont calculées à périmètre constant : seuls les établissements qui ont renseigné l\'indicateur les deux années sont comparés. Les totaux affichés, eux, dépendent du nombre de répondants de l\'année.',
   'Le questionnaire change selon les années : un indicateur absent est signalé « non collecté », jamais remplacé par zéro.',

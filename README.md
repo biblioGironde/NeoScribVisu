@@ -6,6 +6,15 @@ Tableau de bord open source des bibliothèques de Gironde, construit à partir d
 - Filtres : année, intercommunalité, commune, typologie, réseau biblio.gironde.
 - Évolution sur un an à périmètre constant, carte des lieux de lecture, tableau par établissement exportable en CSV.
 
+## Applications associées
+
+Deux tableaux d'évolution lisent les données publiées par NeoScribVisu (`public/data/`), sans les recalculer :
+
+- [NeoScribVisu-BM](https://bibliogironde.github.io/NeoScribVisu-BM/) : évolution d'une bibliothèque (remplace le Looker « Tableau BM évolutions ») ;
+- [NeoScribVisu-CDC](https://bibliogironde.github.io/NeoScribVisu-CDC/) : évolution d'une intercommunalité (remplace le Looker « CDC Tableau évolutions »).
+
+Une année importée ici apparaît dans les deux applications après publication. Les identifiants des indicateurs (`config/indicateurs.json`) sont utilisés par ces applications : ne pas les renommer.
+
 ## Démarrer
 
 Prérequis : Node.js 18 ou plus récent.
@@ -92,7 +101,7 @@ Les pages sont décrites dans le même fichier (`pages` : tuiles, graphiques par
 ## Règles de calcul
 
 - **Réseaux multi-sites** : pour 13 communes, une partie des données (personnel, budgets, usagers) n'est saisie que sur la ligne « réseau » (`UC…`). Les sommes additionnent lieux et réseaux, comme le faisait le Looker. Le rapport d'import signale les indicateurs remplis aux deux niveaux, à vérifier avec les bibliothèques.
-- **Population** : comptée une seule fois par commune, même quand la commune a plusieurs lieux de lecture (le Looker l'additionnait pour chaque lieu).
+- **Population** : comptée une seule fois par commune, même quand la commune a plusieurs lieux de lecture (le Looker l'additionnait pour chaque lieu). La population portée par une ligne « réseau » (celle de tout un réseau intercommunal, sous le code de la commune siège) n'est pas ajoutée à celle des communes de ses lieux : elle ne sert que si la ligne réseau est affichée seule.
 - **Moyennes** : division de totaux, sur les établissements qui renseignent les deux valeurs (le Looker additionnait des ratios ligne à ligne).
 - **Évolutions** : calculées sur les seuls établissements qui ont répondu les deux années, pour qu'une non-réponse ne se lise pas comme une baisse.
 
