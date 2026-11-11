@@ -9,7 +9,7 @@
     "contours": "node scripts/contours.mjs",
     "isochrones": "node scripts/isochrones.mjs"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "csv-parse": "^5.6.0"
   },

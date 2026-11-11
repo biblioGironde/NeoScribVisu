@@ -109,6 +109,7 @@ Les pages sont décrites dans le même fichier (`pages` : tuiles, graphiques par
 
 `npm run verifier` recalcule 90 totaux 2024 et la répartition des 10 principaux SIGB, et les compare aux valeurs relevées dans le Looker d'origine le 03/11/2026 (filtre année 2024, toute la Gironde). Tous doivent être identiques.
 
-## Licence
+## Licences
 
-Code sous licence MIT. Données : ministère de la Culture, enquête annuelle sur les bibliothèques des collectivités territoriales.
+- **Code** : © Département de la Gironde — biblio.gironde, sous licence [GNU Affero General Public License v3.0](LICENSE) ou ultérieure (AGPL-3.0-or-later). Vous pouvez le réutiliser et le modifier ; toute version modifiée, redistribuée ou mise en ligne, doit être publiée sous la même licence, avec son code source.
+- **Données** : ministère de la Culture, enquête annuelle sur les bibliothèques des collectivités territoriales ; contours des communes et des intercommunalités : ADEME. Elles restent sous la licence de leur producteur.
